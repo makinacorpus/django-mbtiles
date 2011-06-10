@@ -3,26 +3,39 @@
     var po = org.polymaps;
     var map;
 
+    var levels = {{ levels }},
+        levelmin = levels[0],
+        levelmax = levels[levels.length-1];
+
+    function boundzoom(z) {
+        // Bound to min/max
+        z = Math.max(levelmin, Math.min(levelmax, z));
+        // If level not available, get closest (and smaller) one
+        var closest = 0,
+            i = 0;
+        while((i < levels.length)
+           && (z >= levels[i])) {
+            closest = levels[i];
+            i++;
+        }
+        return closest;
+    }
+
     function init() {
         map = po.map()
             .container(document.getElementById("map").appendChild(po.svg("svg")))
             .add(po.interact());
+
+        map.center({lon: {{ center.0 }}, lat: {{ center.1 }}});
+        map.zoomRange([levelmin, levelmax]); 
+        map.zoom({{ zoom }}); 
 
         var tiles_url = '{% url mbtilesmap:tile name=name z=1 x=2 y=3 %}';
         // Replace with polymaps URL pattern
         tiles_url = tiles_url.replace('1/2/3', '{Z}/{X}/{Y}');
         map.add(po.image()
             .url(po.url(tiles_url))
-            .zoom(function (z){
-                var levels = {{ levels }},
-                    levelmin = levels[0],
-                    levelmax = levels[levels.length-1];
-                //TODO: manage zoom gaps (ex: levels = [0, 4, 12])
-                return Math.max(levelmin, Math.min(levelmax, z));
-            }));
-        
-        map.center({lon: {{ center.0 }}, lat: {{ center.1 }}});
-        map.zoom({{ zoom }}); 
+            .zoom(boundzoom));
     }
 </script>
 <div id="map"></div>

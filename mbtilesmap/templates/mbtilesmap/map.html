@@ -10,9 +10,7 @@
 
         var tiles_url = '{% url mbtilesmap:tile name=name z=1 x=2 y=3 %}';
         // Replace with polymaps URL pattern
-        tiles_url = tiles_url.replace('1', '{Z}')
-                             .replace('2', '{X}')
-                             .replace('3', '{Y}');
+        tiles_url = tiles_url.replace('1/2/3', '{Z}/{X}/{Y}');
         map.add(po.image()
             .url(po.url(tiles_url))
             .zoom(function (z){

@@ -8,8 +8,13 @@
             .container(document.getElementById("map").appendChild(po.svg("svg")))
             .add(po.interact());
 
+        var tiles_url = '{% url mbtilesmap:tile name=name z=1 x=2 y=3 %}';
+        // Replace with polymaps URL pattern
+        tiles_url = tiles_url.replace('1', '{Z}')
+                             .replace('2', '{X}')
+                             .replace('3', '{Y}');
         map.add(po.image()
-            .url(po.url('{Z}/{X}/{Y}/'))  //XXX: how to reverse tile url ?
+            .url(po.url(tiles_url))
             .zoom(function (z){
                 var levels = {{ levels }},
                     levelmin = levels[0],

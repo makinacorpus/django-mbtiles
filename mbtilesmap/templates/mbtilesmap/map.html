@@ -1,0 +1,28 @@
+<script type="text/javascript" src="{{ STATIC_URL }}mbtilesmap/polymaps.js"></script>
+<script type="text/javascript">
+    var po = org.polymaps;
+    var map;
+
+    function init() {
+        map = po.map()
+            .container(document.getElementById("map").appendChild(po.svg("svg")))
+            .add(po.interact());
+
+        map.add(po.image()
+            .url(po.url('{Z}/{X}/{Y}/'))  //XXX: how to reverse tile url ?
+            .zoom(function (z){
+                var levels = {{ levels }},
+                    levelmin = levels[0],
+                    levelmax = levels[levels.length-1];
+                //TODO: manage zoom gaps (ex: levels = [0, 4, 12])
+                return Math.max(levelmin, Math.min(levelmax, z));
+            }));
+        
+        map.center({lon: {{ center.0 }}, lat: {{ center.1 }}});
+        map.zoom({{ zoom }}); 
+    }
+</script>
+<div id="map"></div>
+<script type="text/javascript">
+    init();
+</script>

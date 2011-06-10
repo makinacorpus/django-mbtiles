@@ -2,7 +2,6 @@ import logging
 
 from django.http import Http404, HttpResponse
 from django.utils.translation import ugettext as _
-from django.views.decorators.cache import cache_page
 
 from models import MBTiles, MissingTileError, MBTilesNotFound
 

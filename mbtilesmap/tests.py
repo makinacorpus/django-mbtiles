@@ -1,16 +1,20 @@
-"""
-This file demonstrates writing tests using the unittest module. These will pass
-when you run "manage.py test".
-
-Replace this with more appropriate tests for your application.
-"""
+import os
 
 from django.test import TestCase
 
+from mbtilesmap.models import MBTiles
 
-class SimpleTest(TestCase):
-    def test_basic_addition(self):
-        """
-        Tests that 1 + 1 always equals 2.
-        """
-        self.assertEqual(1 + 1, 2)
+
+def fixturespath(filename):
+    here = os.path.abspath(os.path.dirname(__file__))
+    return os.path.join(here, 'fixtures', filename)
+
+
+class MBTilesTest(TestCase):
+    def test_center(self):
+        mb = MBTiles(fixturespath('france-6.mbtiles'))
+        self.failUnlessEqual([6], mb.zoomlevels())
+        c = mb.center(6)
+        # Round lon/lat to 4 digits
+        c = map(lambda x: round(x, 4), c)
+        self.failUnlessEqual((2.8125, 47.0402), tuple(c))

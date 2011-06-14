@@ -8,7 +8,7 @@ Serve maps from MBTiles files
 Installation
 ############
 
-.. code-block :: bash
+::
 
     pip install -r requirements.txt
     python setup.py install
@@ -21,7 +21,7 @@ Usage
 
 * Include mbtilesmap urls into your project
 
-.. code-block :: python
+::
 
     urlpatterns = patterns('',
         ...
@@ -31,7 +31,7 @@ Usage
 
 * Add the map to your template
 
-.. code-block :: html
+::
 
     {% load mbtilesmap_tags %}
     ...
@@ -43,7 +43,7 @@ Advanced usage
 --------------
 * Configure default MBTiles folder to load files by their name
 
-.. code-block :: python
+::
 
     # settings.py
     MBTILES_APP_CONFIG  =  {
@@ -52,7 +52,7 @@ Advanced usage
 
 * An index page to list all available MBTiles files
 
-.. code-block :: python
+::
 
     # urls.py
     from django.views.generic import ListView

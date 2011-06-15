@@ -33,7 +33,9 @@ def connectdb(*args):
 
 
 class MBTilesManager(models.Manager):
-    def all(self):
+    """ List available MBTiles in MBTILES_ROOT """
+    def get_query_set(self):
+        # TODO: return QuerySet object!
         if not os.path.exists(app_settings.MBTILES_ROOT):
             raise ImproperlyConfigured(_("MBTILES_ROOT '%s' does not exist") % app_settings.MBTILES_ROOT)
 

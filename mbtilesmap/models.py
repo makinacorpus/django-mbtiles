@@ -48,7 +48,6 @@ class MBTiles(models.Model):
         if not os.path.exists(mbtiles_file):
             mbtiles_file = os.path.join(app_settings.MBTILES_ROOT, name)
             if not os.path.exists(mbtiles_file):
-                print 'wtf', mbtiles_file
                 mbtiles_file = "%s.%s" % (mbtiles_file, app_settings.MBTILES_EXT)
                 if not os.path.exists(mbtiles_file):
                     raise MBTilesNotFound(_("'%s' not found") % mbtiles_file)

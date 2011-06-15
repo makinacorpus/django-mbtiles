@@ -18,3 +18,7 @@ class MBTilesTest(TestCase):
         # Round lon/lat to 4 digits
         c = map(lambda x: round(x, 4), c)
         self.failUnlessEqual((2.8125, 47.0402), tuple(c))
+
+    def test_name(self):
+        mb = MBTiles(fixturespath('france-6.mbtiles'))
+        self.failUnlessEqual('france-6', mb.name)

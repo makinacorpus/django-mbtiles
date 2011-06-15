@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class MissingTileError(Exception):
     pass
 
-class MBTilesNotFound(Exception):
+class MBTilesNotFoundError(Exception):
     pass
 
 class MBTilesFolderError(ImproperlyConfigured):
@@ -71,7 +71,7 @@ class MBTiles(models.Model):
             if not os.path.exists(mbtiles_file):
                 mbtiles_file = "%s.%s" % (mbtiles_file, app_settings.MBTILES_EXT)
                 if not os.path.exists(mbtiles_file):
-                    raise MBTilesNotFound(_("'%s' not found") % mbtiles_file)
+                    raise MBTilesNotFoundError(_("'%s' not found") % mbtiles_file)
         self.fullpath = mbtiles_file
         self.con = None
         self.cur = None

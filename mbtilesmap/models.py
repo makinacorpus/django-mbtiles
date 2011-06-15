@@ -19,6 +19,10 @@ class MissingTileError(Exception):
 class MBTilesNotFound(Exception):
     pass
 
+class MBTilesFolderError(ImproperlyConfigured):
+    def __init__(self, *args, **kwargs):
+        super(ImproperlyConfigured, self).__init__(_("MBTILES_ROOT '%s' does not exist") % app_settings.MBTILES_ROOT)
+
 
 def connectdb(*args):
     """ A decorator for a lazy database connection """
@@ -37,7 +41,7 @@ class MBTilesManager(models.Manager):
     def get_query_set(self):
         # TODO: return QuerySet object!
         if not os.path.exists(app_settings.MBTILES_ROOT):
-            raise ImproperlyConfigured(_("MBTILES_ROOT '%s' does not exist") % app_settings.MBTILES_ROOT)
+            raise MBTilesFolderError()
 
         maps = []
         for dirname, dirnames, filenames in os.walk(app_settings.MBTILES_ROOT):
@@ -61,6 +65,8 @@ class MBTiles(models.Model):
         """
         mbtiles_file = name
         if not os.path.exists(mbtiles_file):
+            if not os.path.exists(app_settings.MBTILES_ROOT):
+                raise MBTilesFolderError()
             mbtiles_file = os.path.join(app_settings.MBTILES_ROOT, name)
             if not os.path.exists(mbtiles_file):
                 mbtiles_file = "%s.%s" % (mbtiles_file, app_settings.MBTILES_EXT)

@@ -49,6 +49,8 @@ class MBTilesManager(models.Manager):
 
 
 class MBTiles(models.Model):
+    """ Represent a MBTiles file """
+
     objects = MBTilesManager()
 
     def __init__(self, name):

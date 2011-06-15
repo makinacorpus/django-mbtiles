@@ -20,6 +20,18 @@ class MBTilesNotFound(Exception):
     pass
 
 
+def connectdb(*args):
+    """ A decorator for a lazy database connection """
+    def wrapper(func):
+        def wrapped(self, *args, **kwargs):
+            if not self.con:
+                self.con = sqlite3.connect(self.fullpath)
+                self.cur = self.con.cursor()
+            return func(self, *args, **kwargs)
+        return wrapped
+    return wrapper
+
+
 class MBTilesManager(models.Manager):
     def all(self):
         if not os.path.exists(app_settings.MBTILES_ROOT):
@@ -30,12 +42,11 @@ class MBTilesManager(models.Manager):
             for filename in filenames:
                 name, ext = os.path.splitext(filename)
                 if ext == '.%s'  % app_settings.MBTILES_EXT:
-                    maps.append(name)
+                    maps.append(MBTiles(os.path.join(dirname, filename)))
         return maps
 
 
 class MBTiles(models.Model):
-    
     objects = MBTilesManager()
 
     def __init__(self, name):
@@ -51,9 +62,16 @@ class MBTiles(models.Model):
                 mbtiles_file = "%s.%s" % (mbtiles_file, app_settings.MBTILES_EXT)
                 if not os.path.exists(mbtiles_file):
                     raise MBTilesNotFound(_("'%s' not found") % mbtiles_file)
-        self.con = sqlite3.connect(mbtiles_file)
-        self.cur = self.con.cursor()
+        self.fullpath = mbtiles_file
+        self.con = None
+        self.cur = None
 
+    @property
+    def name(self):
+        name, ext = os.path.splitext(os.path.basename(self.fullpath))
+        return name
+
+    @connectdb()
     def center(self, zoom):
         """
         Return the center (x,y) of the map at this zoom level.
@@ -83,10 +101,12 @@ class MBTiles(models.Model):
         proj = GoogleProjection(S, [zoom])  # WGS84
         return proj.fromPixelToLL(center, zoom)
 
+    @connectdb()
     def zoomlevels(self):
         self.cur.execute('SELECT DISTINCT(zoom_level) FROM tiles ORDER BY zoom_level')
         return [row[0] for row in self.cur]
 
+    @connectdb()
     def tile(self, z, x, y):
         self.cur.execute('''SELECT tile_data FROM tiles 
                             WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y))

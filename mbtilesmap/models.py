@@ -3,7 +3,6 @@ import os
 import sqlite3
 import logging
 
-from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.utils import simplejson
@@ -38,13 +37,12 @@ def connectdb(*args):
     return wrapper
 
 
-class MBTilesManager(models.Manager):
+class MBTilesManager(object):
     """ List available MBTiles in MBTILES_ROOT """
-    def get_query_set(self):
-        # TODO: return QuerySet object!
+    
+    def all(self):
         if not os.path.exists(app_settings.MBTILES_ROOT):
             raise MBTilesFolderError()
-
         maps = []
         for dirname, dirnames, filenames in os.walk(app_settings.MBTILES_ROOT):
             for filename in filenames:
@@ -54,7 +52,7 @@ class MBTilesManager(models.Manager):
         return maps
 
 
-class MBTiles(models.Model):
+class MBTiles(object):
     """ Represent a MBTiles file """
 
     objects = MBTilesManager()

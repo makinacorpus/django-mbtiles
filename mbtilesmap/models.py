@@ -10,6 +10,7 @@ from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
 from . import app_settings
+from utils import reify
 
 
 logger = logging.getLogger(__name__)
@@ -78,12 +79,12 @@ class MBTiles(object):
         self.con = None
         self.cur = None
 
-    @property
+    @reify
     def name(self):
         name, ext = os.path.splitext(self.basename)
         return name
 
-    @property
+    @reify
     def filesize(self):
         return os.path.getsize(self.fullpath)
 
@@ -103,7 +104,7 @@ class MBTiles(object):
         jsonp.update(self.metadata)
         return '%s(%s);' % (callback, simplejson.dumps(jsonp))
 
-    @property
+    @reify
     @connectdb()
     def metadata(self):
         self.cur.execute('SELECT name, value FROM metadata')
@@ -129,15 +130,15 @@ class MBTiles(object):
         lon = bounds[0] + (bounds[2] - bounds[0])/2
         return [lon, lat, middlezoom]
 
-    @property
+    @reify
     def minzoom(self):
         return self.zoomlevels[0]
 
-    @property
+    @reify
     def maxzoom(self):
         return self.zoomlevels[-1]
 
-    @property
+    @reify
     @connectdb()
     def zoomlevels(self):
         self.cur.execute('SELECT DISTINCT(zoom_level) FROM tiles ORDER BY zoom_level')

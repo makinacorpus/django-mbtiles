@@ -1,2 +1,1 @@
 easydict
-landez>=1.1

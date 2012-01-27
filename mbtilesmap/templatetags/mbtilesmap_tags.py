@@ -18,14 +18,7 @@ class MapNode(template.Node):
         
         t = template.loader.get_template('mbtilesmap/map.html')
 
-        levels = self.mbtiles.zoomlevels()
-        defaultzoom = levels[len(levels)/2]  # middle zoom
-
-        c = template.Context({'STATIC_URL': settings.STATIC_URL,  #XXX: why necessary ?
-                              'name': name,
-                              'center': self.mbtiles.center(defaultzoom),
-                              'levels': levels,
-                              'zoom': defaultzoom}, 
+        c = template.Context({'name': name}, 
                              autoescape=context.autoescape)
         return t.render(c)
 

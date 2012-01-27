@@ -22,3 +22,12 @@ def tile(request, name, z, x, y):
     except MissingTileError:
         logger.warning(_("Tile %s not available in %s") % ((z, x, y), name))
     raise Http404
+
+
+def jsonp(request, name):
+    """ Serve the map configuration as JSONP """
+    mbtiles = MBTiles(name)
+    return HttpResponse(
+        mbtiles.jsonp,
+        content_type = 'application/javascript; charset=utf8'
+    )

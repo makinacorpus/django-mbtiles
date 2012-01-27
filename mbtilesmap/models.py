@@ -1,11 +1,13 @@
+# -*- coding: utf-8 -*-
 import os
 import sqlite3
 import logging
 
 from django.db import models
 from django.core.exceptions import ImproperlyConfigured
+from django.core.urlresolvers import reverse
+from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from landez.proj import GoogleProjection
 
 from . import app_settings
 
@@ -73,44 +75,74 @@ class MBTiles(models.Model):
                 if not os.path.exists(mbtiles_file):
                     raise MBTilesNotFoundError(_("'%s' not found") % mbtiles_file)
         self.fullpath = mbtiles_file
+        self.basename = os.path.basename(self.fullpath)
         self.con = None
         self.cur = None
 
     @property
     def name(self):
-        name, ext = os.path.splitext(os.path.basename(self.fullpath))
+        name, ext = os.path.splitext(self.basename)
         return name
 
+    @property
+    def filesize(self):
+        return os.path.getsize(self.fullpath)
+
+    @property
+    def jsonp(self):
+        #TODO: cache !
+        tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.name, x='{x}',y='{y}',z='{z}'))
+        tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
+        jsonp = {
+            "id": self.name,
+            "scheme": "xyz",
+            "basename": self.basename,
+            "filesize": self.filesize,
+            "minzoom": self.minzoom,
+            "maxzoom": self.maxzoom,
+            "center": self.center(),
+            "tiles": [tilepattern],
+            "webpage": reverse("map", kwargs=dict(name=self.name)),
+            #"download": reverse("mbtilesmap:download", kwargs=dict(name=self.name)),
+        }
+        jsonp.update(self.metadata)
+        return 'grid(%s);' % simplejson.dumps(jsonp)
+
+    @property
     @connectdb()
-    def center(self, zoom):
+    def metadata(self):
+        self.cur.execute('SELECT name, value FROM metadata')
+        rows = [(row[0], row[1]) for row in self.cur]
+        metadata = dict(rows)
+        bounds = metadata.get('bounds', '').split(',')
+        if len(bounds) != 4:
+            logger.warning(_("Missing or invalid bounds metadata in '%s'") % self.name)
+            bounds = '-180,-90,180,90'
+        metadata['bounds'] = list(map(float, bounds))
+        return metadata
+
+    @connectdb()
+    def center(self, zoom=None):
         """
         Return the center (x,y) of the map at this zoom level.
         """
-        # Find a group of adjacent available tiles at this zoom level
-        self.cur.execute('''SELECT tile_column, tile_row FROM tiles 
-                            WHERE zoom_level=? 
-                            ORDER BY tile_column, tile_row;''', (zoom,))
-        t = self.cur.fetchone()
-        xmin, ymin = t
-        previous = t
-        while t and t[0] - previous[0] <= 1:
-            # adjacent, go on
-            previous = t
-            t = self.cur.fetchone()
-        xmax, ymax = previous
-        # Transform (xmin, ymin) (xmax, ymax) to pixels
-        S = app_settings.TILE_SIZE
-        bottomleft = (xmin * S, (ymax + 1) * S)
-        topright = ((xmax + 1) * S, ymin * S)
-        # Determine center of rectangle
-        width = topright[0] - bottomleft[0]
-        height = bottomleft[1] - topright[1]
-        center = (topright[0] - (width/2), 
-                  bottomleft[1] - (height/2))
-        # Convert center to (lon, lat)
-        proj = GoogleProjection(S, [zoom])  # WGS84
-        return proj.fromPixelToLL(center, zoom)
+        middlezoom = self.zoomlevels[len(self.zoomlevels)/2]
+        if zoom is None:
+            zoom = middlezoom
+        bounds = self.metadata['bounds']
+        lat = bounds[1] + (bounds[3] - bounds[1])/2
+        lon = bounds[0] + (bounds[2] - bounds[0])/2
+        return [lon, lat, middlezoom]
 
+    @property
+    def minzoom(self):
+        return self.zoomlevels[0]
+
+    @property
+    def maxzoom(self):
+        return self.zoomlevels[-1]
+
+    @property
     @connectdb()
     def zoomlevels(self):
         self.cur.execute('SELECT DISTINCT(zoom_level) FROM tiles ORDER BY zoom_level')
@@ -118,8 +150,9 @@ class MBTiles(models.Model):
 
     @connectdb()
     def tile(self, z, x, y):
+        y_mercator = (2**int(z) - 1) - int(y)
         self.cur.execute('''SELECT tile_data FROM tiles 
-                            WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y))
+                            WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
         t = self.cur.fetchone()
         if not t:
             raise MissingTileError

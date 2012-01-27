@@ -1,44 +1,16 @@
-<script type="text/javascript" src="{{ STATIC_URL }}mbtilesmap/polymaps.js"></script>
-<script type="text/javascript">
-    var po = org.polymaps;
-    var map;
+<div id='map-{{name}}' class="map"></div>
+<script>
+var mm = com.modestmaps;
+var url = '{% url mbtilesmap:jsonp name=name %}';
 
-    var levels = {{ levels }},
-        levelmin = levels[0],
-        levelmax = levels[levels.length-1];
+wax.tilejson(url, function(tilejson) {
+  var m = new mm.Map('map-{{name}}',
+    new wax.mm.connector(tilejson));
 
-    function boundzoom(z) {
-        // Bound to min/max
-        z = Math.max(levelmin, Math.min(levelmax, z));
-        // If level not available, get closest (and smaller) one
-        var closest = 0,
-            i = 0;
-        while((i < levels.length)
-           && (z >= levels[i])) {
-            closest = levels[i];
-            i++;
-        }
-        return closest;
-    }
-
-    function init() {
-        map = po.map()
-            .container(document.getElementById("map").appendChild(po.svg("svg")))
-            .add(po.interact());
-
-        map.center({lon: {{ center.0 }}, lat: {{ center.1 }}});
-        map.zoomRange([levelmin, levelmax]); 
-        map.zoom({{ zoom }}); 
-
-        var tiles_url = '{% url mbtilesmap:tile name=name z=1 x=2 y=3 %}';
-        // Replace with polymaps URL pattern
-        tiles_url = tiles_url.replace('1/2/3', '{Z}/{X}/{Y}');
-        map.add(po.image()
-            .url(po.url(tiles_url))
-            .zoom(boundzoom));
-    }
-</script>
-<div id="map"></div>
-<script type="text/javascript">
-    init();
+  m.setCenterZoom(new mm.Location(tilejson.center[1],
+                                  tilejson.center[0]),
+                                  tilejson.center[2]);
+  wax.mm.zoomer(m).appendTo(m.parent);
+  wax.mm.interaction(m);
+});
 </script>

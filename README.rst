@@ -37,8 +37,8 @@ Usage
     {% load mbtilesmap_tags %}
     ...
     {% block head %}
-    {{ block.super }}
     {% include "mbtilesmap/head.html" %}
+    {{ block.super }}
     {% endblock head %}
     
     ...

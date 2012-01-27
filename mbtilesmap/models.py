@@ -27,18 +27,6 @@ class MBTilesFolderError(ImproperlyConfigured):
         super(ImproperlyConfigured, self).__init__(_("MBTILES_ROOT '%s' does not exist") % app_settings.MBTILES_ROOT)
 
 
-def connectdb(*args):
-    """ A decorator for a lazy database connection """
-    def wrapper(func):
-        def wrapped(self, *args, **kwargs):
-            if not self.con:
-                self.con = sqlite3.connect(self.fullpath)
-                self.cur = self.con.cursor()
-            return func(self, *args, **kwargs)
-        return wrapped
-    return wrapper
-
-
 class MBTilesManager(object):
     """ List available MBTiles in MBTILES_ROOT """
     
@@ -76,8 +64,19 @@ class MBTiles(object):
                     raise MBTilesNotFoundError(_("'%s' not found") % mbtiles_file)
         self.fullpath = mbtiles_file
         self.basename = os.path.basename(self.fullpath)
-        self.con = None
-        self.cur = None
+        self._con = None
+        self._cur = None
+
+    def _query(self, sql, *args):
+        """ Executes the specified `sql` query and returns the cursor """
+        if not self._con:
+            logger.debug(_("Open MBTiles file '%s'") % self.fullpath)
+            self._con = sqlite3.connect(self.fullpath)
+            self._cur = self._con.cursor()
+        sql = ' '.join(sql.split())
+        logger.debug(_("Execute query '%s' %s") % (sql, args))
+        self._cur.execute(sql, *args)
+        return self._cur
 
     @reify
     def name(self):
@@ -105,10 +104,9 @@ class MBTiles(object):
         return '%s(%s);' % (callback, simplejson.dumps(jsonp))
 
     @reify
-    @connectdb()
     def metadata(self):
-        self.cur.execute('SELECT name, value FROM metadata')
-        rows = [(row[0], row[1]) for row in self.cur]
+        rows = self._query('SELECT name, value FROM metadata')
+        rows = [(row[0], row[1]) for row in rows]
         metadata = dict(rows)
         bounds = metadata.get('bounds', '').split(',')
         if len(bounds) != 4:
@@ -117,7 +115,6 @@ class MBTiles(object):
         metadata['bounds'] = list(map(float, bounds))
         return metadata
 
-    @connectdb()
     def center(self, zoom=None):
         """
         Return the center (x,y) of the map at this zoom level.
@@ -139,37 +136,34 @@ class MBTiles(object):
         return self.zoomlevels[-1]
 
     @reify
-    @connectdb()
     def zoomlevels(self):
-        self.cur.execute('SELECT DISTINCT(zoom_level) FROM tiles ORDER BY zoom_level')
-        return [row[0] for row in self.cur]
+        rows = self._query('SELECT DISTINCT(zoom_level) FROM tiles ORDER BY zoom_level')
+        return [row[0] for row in rows]
 
-    @connectdb()
     def tile(self, z, x, y):
         y_mercator = (2**int(z) - 1) - int(y)
-        self.cur.execute('''SELECT tile_data FROM tiles 
-                            WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
-        t = self.cur.fetchone()
+        rows = self._query('''SELECT tile_data FROM tiles 
+                              WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
+        t = rows.fetchone()
         if not t:
             raise MissingTileError
         return t[0]
 
-    @connectdb()
     def grid(self, z, x, y, callback):
         y_mercator = (2**int(z) - 1) - int(y)
-        self.cur.execute('''SELECT grid FROM grids 
-                            WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
-        t = self.cur.fetchone()
+        rows = self._query('''SELECT grid FROM grids 
+                              WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
+        t = rows.fetchone()
         if not t:
             raise MissingTileError
         grid_json = simplejson.loads(zlib.decompress(t[0]))
         
-        self.cur.execute('''SELECT key_name, key_json FROM grid_data
-                            WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
+        rows = self._query('''SELECT key_name, key_json FROM grid_data
+                              WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
         # join up with the grid 'data' which is in pieces when stored in mbtiles file
         grid_json['data'] = {}
-        grid_data = self.cur.fetchone()
+        grid_data = rows.fetchone()
         while grid_data:
             grid_json['data'][grid_data[0]] = simplejson.loads(grid_data[1])
-            grid_data = self.cur.fetchone()
+            grid_data = rows.fetchone()
         return '%s(%s);' % (callback, simplejson.dumps(grid_json))

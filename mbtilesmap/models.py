@@ -4,7 +4,7 @@ import sqlite3
 import logging
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
@@ -88,9 +88,9 @@ class MBTiles(object):
 
     @property
     def jsonp(self):
-        #TODO: cache !
         tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.name, x='{x}',y='{y}',z='{z}'))
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
+        
         jsonp = {
             "id": self.name,
             "scheme": "xyz",
@@ -100,9 +100,17 @@ class MBTiles(object):
             "maxzoom": self.maxzoom,
             "center": self.center(),
             "tiles": [tilepattern],
-            "webpage": reverse("map", kwargs=dict(name=self.name)),
-            #"download": reverse("mbtilesmap:download", kwargs=dict(name=self.name)),
         }
+        # Add direct link to Webpage if defined in project
+        try:
+            mapurl =reverse(app_settings.MAP_URL_NAME, kwargs=dict(name=self.name))
+            jsonp["webpage"] = mapurl
+        except NoReverseMatch, e:
+            logger.warning("Webpage url for map (MAP_URL_NAME) not available.")
+        
+        #TODO: Add direct link to download MBTiles file
+        #"download": reverse("mbtilesmap:download", kwargs=dict(name=self.name)),
+        
         jsonp.update(self.metadata)
         return 'grid(%s);' % simplejson.dumps(jsonp)
 
@@ -114,8 +122,8 @@ class MBTiles(object):
         metadata = dict(rows)
         bounds = metadata.get('bounds', '').split(',')
         if len(bounds) != 4:
-            logger.warning(_("Missing or invalid bounds metadata in '%s'") % self.name)
-            bounds = '-180,-90,180,90'
+            logger.warning(_("Invalid bounds metadata in '%s'") % self.name)
+            bounds = [-180,-90,180,90]
         metadata['bounds'] = list(map(float, bounds))
         return metadata
 

@@ -5,7 +5,7 @@ import logging
 import zlib
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse, NoReverseMatch
+from django.core.urlresolvers import reverse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
 
@@ -90,7 +90,6 @@ class MBTiles(object):
     def jsonp(self, callback):
         tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.name, x='{x}',y='{y}',z='{z}'))
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
-        
         jsonp = {
             "id": self.name,
             "scheme": "xyz",
@@ -101,16 +100,6 @@ class MBTiles(object):
             "center": self.center(),
             "tiles": [tilepattern],
         }
-        # Add direct link to Webpage if defined in project
-        try:
-            mapurl =reverse(app_settings.MAP_URL_NAME, kwargs=dict(name=self.name))
-            jsonp["webpage"] = mapurl
-        except NoReverseMatch, e:
-            logger.warning("Webpage url for map (MAP_URL_NAME) not available.")
-        
-        #TODO: Add direct link to download MBTiles file
-        #"download": reverse("mbtilesmap:download", kwargs=dict(name=self.name)),
-        
         jsonp.update(self.metadata)
         return '%s(%s);' % (callback, simplejson.dumps(jsonp))
 

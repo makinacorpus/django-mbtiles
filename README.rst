@@ -18,6 +18,7 @@ Usage
 #####
 
 * Add ``mbtilesmap`` to your ``INSTALLED_APPS``
+* Make sure you have ``'django.core.context_processors.static'`` in your `context processors <https://docs.djangoproject.com/en/dev/howto/static-files/#with-a-context-processor>`_
 
 * Include mbtilesmap urls into your project
 
@@ -29,14 +30,20 @@ Usage
         url(r'^', include('mbtilesmap.urls', namespace='mb', app_name='mbtilesmap')),
     )
 
-* Add the map to your template
+* Add the HTML header and call the template tag
 
 ::
 
     {% load mbtilesmap_tags %}
     ...
+    {% block head %}
+    {{ block.super }}
+    {% include "mbtilesmap/head.html" %}
+    {% endblock head %}
+    
     ...
-    {% mbtiles_map filename %}
+    ...
+    {% mbtilesmap filename %}
 
 
 Example : a MBTiles map browser
@@ -108,7 +115,12 @@ with this in ``map.html``
 ::
 
     {% load mbtilesmap_tags %}
+    
+    {% block head %}
+    {{ block.super }}
+    {% include "mbtilesmap/head.html" %}
+    {% endblock head %}
 
     {% block body %}
-    {% mbtiles_map name %}
+    {% mbtilesmap name %}
     {% endblock body %}

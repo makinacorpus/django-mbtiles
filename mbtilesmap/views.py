@@ -11,6 +11,7 @@ from models import MBTiles, MissingTileError, MBTilesNotFoundError
 logger = logging.getLogger(__name__)
 
 
+#TODO: cache
 def tile(request, name, z, x, y):
     """ Serve a single tile """
     try:
@@ -26,11 +27,32 @@ def tile(request, name, z, x, y):
     raise Http404
 
 
-@cache_page(app_settings.CACHE_TIMEOUT_JSONP)
+@cache_page(app_settings.CACHE_TIMEOUT)
+def grid(request, name, z, x, y):
+    callback = request.GET.get('callback', 'grid')
+    try:
+        mbtiles = MBTiles(name)
+        return HttpResponse(
+            mbtiles.grid(z, x, y, callback),
+            content_type = 'application/javascript; charset=utf8'
+        )
+    except MBTilesNotFoundError, e:
+        logger.warning(e)
+    except MissingTileError:
+        logger.warning(_("Grid tile %s not available in %s") % ((z, x, y), name))
+    raise Http404
+
+
+@cache_page(app_settings.CACHE_TIMEOUT)
 def jsonp(request, name):
     """ Serve the map configuration as JSONP """
-    mbtiles = MBTiles(name)
-    return HttpResponse(
-        mbtiles.jsonp,
-        content_type = 'application/javascript; charset=utf8'
-    )
+    callback = request.GET.get('callback', 'grid')
+    try:
+        mbtiles = MBTiles(name)
+        return HttpResponse(
+            mbtiles.jsonp(callback),
+            content_type = 'application/javascript; charset=utf8'
+        )
+    except MBTilesNotFoundError, e:
+        logger.warning(e)
+    raise Http404

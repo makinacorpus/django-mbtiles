@@ -23,8 +23,8 @@ class MapNode(template.Node):
         return t.render(c)
 
 
-@register.tag(name="mbtiles_map")
-def do_mbtiles_map(parser, token):
+@register.tag(name="mbtilesmap")
+def do_mbtilesmap(parser, token):
     """
     {% mbtiles_map name %}
 

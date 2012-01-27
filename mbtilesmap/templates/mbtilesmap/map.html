@@ -12,6 +12,7 @@ wax.tilejson(url, function(tilejson) {
                                   tilejson.center[2]);
   wax.mm.zoomer(m).appendTo(m.parent);
   wax.mm.legend(m, tilejson).appendTo(m.parent);
-  wax.mm.interaction(m);
+  wax.mm.attribution(m, tilejson).appendTo(m.parent);
+  wax.mm.interaction(m, tilejson);
 });
 </script>

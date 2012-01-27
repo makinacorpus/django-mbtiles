@@ -2,6 +2,7 @@
 import os
 import sqlite3
 import logging
+import zlib
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -86,8 +87,7 @@ class MBTiles(object):
     def filesize(self):
         return os.path.getsize(self.fullpath)
 
-    @property
-    def jsonp(self):
+    def jsonp(self, callback):
         tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.name, x='{x}',y='{y}',z='{z}'))
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
         
@@ -112,7 +112,7 @@ class MBTiles(object):
         #"download": reverse("mbtilesmap:download", kwargs=dict(name=self.name)),
         
         jsonp.update(self.metadata)
-        return 'grid(%s);' % simplejson.dumps(jsonp)
+        return '%s(%s);' % (callback, simplejson.dumps(jsonp))
 
     @property
     @connectdb()
@@ -163,3 +163,23 @@ class MBTiles(object):
         if not t:
             raise MissingTileError
         return t[0]
+
+    @connectdb()
+    def grid(self, z, x, y, callback):
+        y_mercator = (2**int(z) - 1) - int(y)
+        self.cur.execute('''SELECT grid FROM grids 
+                            WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
+        t = self.cur.fetchone()
+        if not t:
+            raise MissingTileError
+        grid_json = simplejson.loads(zlib.decompress(t[0]))
+        
+        self.cur.execute('''SELECT key_name, key_json FROM grid_data
+                            WHERE zoom_level=? AND tile_column=? AND tile_row=?;''', (z, x, y_mercator))
+        # join up with the grid 'data' which is in pieces when stored in mbtiles file
+        grid_json['data'] = {}
+        grid_data = self.cur.fetchone()
+        while grid_data:
+            grid_json['data'][grid_data[0]] = simplejson.loads(grid_data[1])
+            grid_data = self.cur.fetchone()
+        return '%s(%s);' % (callback, simplejson.dumps(grid_json))

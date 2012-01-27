@@ -5,5 +5,5 @@ from views import tile
 
 
 urlpatterns = patterns('',
-    url(r'^(?P<name>[-\w]+)/(?P<z>\d+)/(?P<x>\d+)/(?P<y>\d+)/$', tile, name="tile"),
+    url(r'^(?P<name>[\.\-\w]+)/(?P<z>\d+)/(?P<x>\d+)/(?P<y>\d+)/$', tile, name="tile"),
 )

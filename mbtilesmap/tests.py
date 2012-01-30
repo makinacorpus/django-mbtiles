@@ -11,14 +11,11 @@ FIXTURES_PATH = os.path.join(FILE_PATH, 'fixtures')
 
 
 class MBTilesTest(TestCase):
-    def test_list(self):
-        mgr = MBTilesManager()
-        # Default settings folder
-        self.failIfEqual(['france-6'], [o.name for o in mgr.all()])
-        app_settings.MBTILES_ROOT = "random-path-xyz"
-        self.assertRaises(MBTilesFolderError, MBTilesManager)
-        # Use fixtures folder
+    def setUp(self):
         app_settings.MBTILES_ROOT = FIXTURES_PATH
+
+    def test_list(self):
+        # Use fixtures folder
         mgr = MBTilesManager()
         self.failUnlessEqual(['france-6'], [o.name for o in mgr.all()])
         # Can be called twice with same result
@@ -39,9 +36,15 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual(['file'], [o.name for o in mgr.all()])
         os.remove(extrafile)
         app_settings.MBTILES_EXT = 'mbtiles'
+        # Try a folder without mbtiles
+        app_settings.MBTILES_ROOT = '.'
+        mgr = MBTilesManager()
+        self.failIfEqual(['france-6'], [o.name for o in mgr.all()])
+        app_settings.MBTILES_ROOT = "random-path-xyz"
+        self.assertRaises(MBTilesFolderError, MBTilesManager)
 
     def test_center(self):
-        mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-6.mbtiles'))
+        mb = MBTiles('france-6')
         # Only one zoom level
         self.failUnlessEqual([6], mb.zoomlevels)
         c = mb.center()
@@ -51,8 +54,6 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual((0, 0, 6), tuple(c))
 
     def test_name(self):
-        # Existing file
-        app_settings.MBTILES_ROOT = FIXTURES_PATH
         # full path
         mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-6.mbtiles'))
         self.failUnlessEqual('france-6', mb.name)
@@ -66,3 +67,7 @@ class MBTilesTest(TestCase):
         self.assertRaises(MBTilesNotFoundError, MBTiles, ('unknown.mbtiles'))
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTiles, ('unknown.mbtiles'))
+
+    def test_filesize(self):
+        mb = MBTiles('france-6')
+        self.failUnlessEqual(233472, mb.filesize)

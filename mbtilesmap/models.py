@@ -110,7 +110,7 @@ class MBTiles(object):
         metadata = dict(rows)
         bounds = metadata.get('bounds', '').split(',')
         if len(bounds) != 4:
-            logger.warning(_("Invalid bounds metadata in '%s'") % self.name)
+            logger.warning(_("Invalid bounds metadata in '%s', fallback to whole world.") % self.name)
             bounds = [-180,-90,180,90]
         metadata['bounds'] = list(map(float, bounds))
         return metadata
@@ -122,10 +122,13 @@ class MBTiles(object):
         middlezoom = self.zoomlevels[len(self.zoomlevels)/2]
         if zoom is None:
             zoom = middlezoom
+        if zoom not in self.zoomlevels:
+            logger.warning(_("Invalid zoom level (%s), fallback to middle zoom (%s)") % (zoom, middlezoom))
+            zoom = middlezoom
         bounds = self.metadata['bounds']
         lat = bounds[1] + (bounds[3] - bounds[1])/2
         lon = bounds[0] + (bounds[2] - bounds[0])/2
-        return [lon, lat, middlezoom]
+        return [lon, lat, zoom]
 
     @reify
     def minzoom(self):

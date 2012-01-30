@@ -3,7 +3,8 @@ import os
 from django.test import TestCase
 
 from mbtilesmap import app_settings
-from mbtilesmap.models import MBTiles, MBTilesManager, MBTilesFolderError
+from mbtilesmap.models import (MBTiles, MBTilesManager, 
+                               MBTilesFolderError, MBTilesNotFoundError)
 
 FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 FIXTURES_PATH = os.path.join(FILE_PATH, 'fixtures')
@@ -37,6 +38,7 @@ class MBTilesTest(TestCase):
         app_settings.MBTILES_EXT = 'wrong'
         self.failUnlessEqual(['file'], [o.name for o in mgr.all()])
         os.remove(extrafile)
+        app_settings.MBTILES_EXT = 'mbtiles'
 
     def test_center(self):
         mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-6.mbtiles'))
@@ -49,5 +51,18 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual((0, 0, 6), tuple(c))
 
     def test_name(self):
+        # Existing file
+        app_settings.MBTILES_ROOT = FIXTURES_PATH
+        # full path
         mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-6.mbtiles'))
         self.failUnlessEqual('france-6', mb.name)
+        # relative to MBTILES_ROOT
+        mb = MBTiles('france-6.mbtiles')
+        self.failUnlessEqual('france-6', mb.name)
+        # with default extension
+        mb = MBTiles('france-6')
+        self.failUnlessEqual('france-6', mb.name)
+        # Unknown file
+        self.assertRaises(MBTilesNotFoundError, MBTiles, ('unknown.mbtiles'))
+        app_settings.MBTILES_ROOT = "random-path-xyz"
+        self.assertRaises(MBTilesFolderError, MBTiles, ('unknown.mbtiles'))

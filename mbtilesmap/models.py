@@ -29,17 +29,20 @@ class MBTilesFolderError(ImproperlyConfigured):
 
 class MBTilesManager(object):
     """ List available MBTiles in MBTILES_ROOT """
-    
-    def all(self):
+    def __init__(self, *args, **kwargs):
         if not os.path.exists(app_settings.MBTILES_ROOT):
             raise MBTilesFolderError()
-        maps = []
-        for dirname, dirnames, filenames in os.walk(app_settings.MBTILES_ROOT):
+        self.folder = app_settings.MBTILES_ROOT
+
+    def all(self):
+        return self
+
+    def __iter__(self):
+        for dirname, dirnames, filenames in os.walk(self.folder):
             for filename in filenames:
                 name, ext = os.path.splitext(filename)
                 if ext == '.%s'  % app_settings.MBTILES_EXT:
-                    maps.append(MBTiles(os.path.join(dirname, filename)))
-        return maps
+                    yield MBTiles(os.path.join(dirname, filename))
 
 
 class MBTiles(object):

@@ -117,8 +117,8 @@ with this in ``map.html``
     {% load mbtilesmap_tags %}
     
     {% block head %}
-    {{ block.super }}
     {% include "mbtilesmap/head.html" %}
+    {{ block.super }}
     {% endblock head %}
 
     {% block body %}

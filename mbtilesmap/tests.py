@@ -17,20 +17,20 @@ class MBTilesTest(TestCase):
     def test_list(self):
         # Use fixtures folder
         mgr = MBTilesManager()
-        self.failUnlessEqual(['france-6'], [o.name for o in mgr.all()])
+        self.failUnlessEqual(['france-35', 'geography-class'], [o.name for o in mgr.all()])
         # Can be called twice with same result
         qs = mgr.all()
-        self.failUnlessEqual(['france-6'], [o.name for o in qs])
-        self.failUnlessEqual(['france-6'], [o.name for o in qs])
+        self.failUnlessEqual(['france-35', 'geography-class'], [o.name for o in qs])
+        self.failUnlessEqual(['france-35', 'geography-class'], [o.name for o in qs])
         # And is refreshed
         extrafile = os.path.join(FIXTURES_PATH, 'file.mbtiles')
         open(extrafile, 'w').close()
-        self.failUnlessEqual(['france-6', 'file'], [o.name for o in mgr.all()])
+        self.failUnlessEqual(['file', 'france-35', 'geography-class'], [o.name for o in mgr.all()])
         os.remove(extrafile)
         # File with different extensions are ignored
         extrafile = os.path.join(FIXTURES_PATH, 'file.wrong')
         open(extrafile, 'w').close()
-        self.failUnlessEqual(['france-6'], [o.name for o in mgr.all()])
+        self.failUnlessEqual(['france-35', 'geography-class'], [o.name for o in mgr.all()])
         # Except if we change the setting extension
         app_settings.MBTILES_EXT = 'wrong'
         self.failUnlessEqual(['file'], [o.name for o in mgr.all()])
@@ -39,35 +39,35 @@ class MBTilesTest(TestCase):
         # Try a folder without mbtiles
         app_settings.MBTILES_ROOT = '.'
         mgr = MBTilesManager()
-        self.failIfEqual(['france-6'], [o.name for o in mgr.all()])
+        self.failIfEqual(['france-35'], [o.name for o in mgr.all()])
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTilesManager)
 
     def test_center(self):
-        mb = MBTiles('france-6')
+        mb = MBTiles('france-35')
         # Only one zoom level
-        self.failUnlessEqual([6], mb.zoomlevels)
+        self.failUnlessEqual([3,5], mb.zoomlevels)
         c = mb.center()
         # MBTiles has no metadata, center will be (0, 0)
-        self.failUnlessEqual((0, 0, 6), tuple(c))
-        c = mb.center(3)
-        self.failUnlessEqual((0, 0, 6), tuple(c))
+        self.failUnlessEqual((0, 0, 5), tuple(c))
+        c = mb.center(4)
+        self.failUnlessEqual((0, 0, 5), tuple(c))
 
     def test_name(self):
         # full path
-        mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-6.mbtiles'))
-        self.failUnlessEqual('france-6', mb.name)
+        mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'))
+        self.failUnlessEqual('france-35', mb.name)
         # relative to MBTILES_ROOT
-        mb = MBTiles('france-6.mbtiles')
-        self.failUnlessEqual('france-6', mb.name)
+        mb = MBTiles('france-35.mbtiles')
+        self.failUnlessEqual('france-35', mb.name)
         # with default extension
-        mb = MBTiles('france-6')
-        self.failUnlessEqual('france-6', mb.name)
+        mb = MBTiles('france-35')
+        self.failUnlessEqual('france-35', mb.name)
         # Unknown file
         self.assertRaises(MBTilesNotFoundError, MBTiles, ('unknown.mbtiles'))
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTiles, ('unknown.mbtiles'))
 
     def test_filesize(self):
-        mb = MBTiles('france-6')
-        self.failUnlessEqual(233472, mb.filesize)
+        mb = MBTiles('france-35')
+        self.failUnlessEqual(117760, mb.filesize)

@@ -91,60 +91,77 @@ class MBTiles(object):
         return os.path.getsize(self.fullpath)
 
     def jsonp(self, callback):
+        # Raw metadata
+        jsonp = dict(self.metadata)
+        # Post-processed metadata
+        jsonp.update(**{
+            "bounds": self.bounds,
+            "center": self.center,
+            "minzoom": self.minzoom,
+            "maxzoom": self.maxzoom,
+        })
+        # Additionnal info
         tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.name, x='{x}',y='{y}',z='{z}'))
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
-        jsonp = {
+        jsonp.update(**{
             "id": self.name,
             "scheme": "xyz",
             "basename": self.basename,
             "filesize": self.filesize,
-            "minzoom": self.minzoom,
-            "maxzoom": self.maxzoom,
-            "center": self.center(),
             "tiles": [tilepattern],
-        }
-        jsonp.update(self.metadata)
+        })
         return '%s(%s);' % (callback, simplejson.dumps(jsonp))
 
     @reify
     def metadata(self):
         rows = self._query('SELECT name, value FROM metadata')
         rows = [(row[0], row[1]) for row in rows]
-        metadata = dict(rows)
-        bounds = metadata.get('bounds', '').split(',')
-        if len(bounds) != 4:
-            logger.warning(_("Invalid bounds metadata in '%s', fallback to whole world.") % self.name)
-            bounds = [-180,-90,180,90]
-        metadata['bounds'] = list(map(float, bounds))
-        return metadata
+        return dict(rows)
 
-    def center(self, zoom=None):
+    @reify
+    def center(self):
         """
         Return the center (x,y) of the map at this zoom level.
         """
-        middlezoom = self.zoomlevels[len(self.zoomlevels)/2]
-        if zoom is None:
-            zoom = middlezoom
-        if zoom not in self.zoomlevels:
-            logger.warning(_("Invalid zoom level (%s), fallback to middle zoom (%s)") % (zoom, middlezoom))
-            zoom = middlezoom
-        bounds = self.metadata['bounds']
-        lat = bounds[1] + (bounds[3] - bounds[1])/2
-        lon = bounds[0] + (bounds[2] - bounds[0])/2
-        return [lon, lat, zoom]
+        center = self.metadata.get('center', '').split(',')
+        if len(center) == 3:
+            lon, lat, zoom = map(float, center)
+            zoom = int(zoom)
+            if zoom not in self.zoomlevels:
+                logger.warning(_("Invalid zoom level (%s), fallback to middle zoom (%s)") % (zoom, self.middlezoom))
+                zoom = self.middlezoom
+            return (lon, lat, zoom)
+        # Invalid center from metadata, guess center from bounds
+        lat = self.bounds[1] + (self.bounds[3] - self.bounds[1])/2
+        lon = self.bounds[0] + (self.bounds[2] - self.bounds[0])/2
+        return (lon, lat, self.middlezoom)
+
+    @reify
+    def bounds(self):
+        bounds = self.metadata.get('bounds', '').split(',')
+        if len(bounds) != 4:
+            logger.warning(_("Invalid bounds metadata in '%s', fallback to whole world.") % self.name)
+            bounds = [-180,-90,180,90]
+        return tuple(map(float, bounds))
 
     @reify
     def minzoom(self):
-        return self.zoomlevels[0]
+        z = self.metadata.get('minzoom', self.zoomlevels[0])
+        return int(z)
 
     @reify
     def maxzoom(self):
-        return self.zoomlevels[-1]
+        z = self.metadata.get('maxzoom', self.zoomlevels[-1])
+        return int(z)
+
+    @reify
+    def middlezoom(self):
+        return self.zoomlevels[len(self.zoomlevels)/2]
 
     @reify
     def zoomlevels(self):
         rows = self._query('SELECT DISTINCT(zoom_level) FROM tiles ORDER BY zoom_level')
-        return [row[0] for row in rows]
+        return [int(row[0]) for row in rows]
 
     def tile(self, z, x, y):
         y_mercator = (2**int(z) - 1) - int(y)

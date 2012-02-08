@@ -4,10 +4,10 @@ import hashlib
 
 from django.utils import simplejson
 from django.test import TestCase
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 from easydict import EasyDict as edict
 
-from . import app_settings
+from . import app_settings, MBTILES_ID_PATTERN
 from models import (MBTiles, MBTilesManager, 
                     MBTilesFolderError, MBTilesNotFoundError)
 
@@ -171,3 +171,21 @@ class MBTilesTest(TestCase):
         self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
         response = self.client.get(reverse('mbtilesmap:jsonp', kwargs=dict(name='class-geography')))
         self.assertEqual(response.status_code, 404)
+
+    def test_patterns(self):
+        
+        self.failUnlessEqual('/geography-class/2/2/1.png', reverse('mbtilesmap:tile', kwargs=dict(name='geography-class', z='2', x='2', y='1')))
+        self.failUnlessEqual('/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png', reverse('mbtilesmap:tile', kwargs=dict(name='geography-class', z='{z}', x='{x}', y='{y}')))
+        self.assertRaises(NoReverseMatch, reverse, ('mbtilesmap:tile'), kwargs=dict(name='geography-class', z='{z}', x='{y}', y='{x}'))
+        self.assertRaises(NoReverseMatch, reverse, ('mbtilesmap:tile'), kwargs=dict(name='geography-class', z='z', x='y', y='x'))
+
+        p = re.compile('^%s$' % MBTILES_ID_PATTERN)
+        self.failUnless(p.match('file.subname'))
+        self.failUnless(p.match('file.subname.mbtiles'))
+        self.failUnless(p.match('file-test'))
+        self.failUnless(p.match('file_1234'))
+
+        self.failIf(p.match('file+1234'))
+        self.failIf(p.match('file/1234'))
+        self.failIf(p.match('file"'))
+

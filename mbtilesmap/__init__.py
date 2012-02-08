@@ -2,7 +2,7 @@ from django.conf import settings
 from easydict import EasyDict
 
 
-MBTILES_NAME_PATTERN = r'[\.\-\w]+'
+MBTILES_ID_PATTERN = r'[\.\-_0-9a-zA-Z]+'
 
 app_settings = EasyDict(dict(
     MBTILES_EXT = 'mbtiles',

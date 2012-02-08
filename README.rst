@@ -93,7 +93,7 @@ having this in ``index.html`` ::
 
     # urls.py 
     from django.views.generic import TemplateView
-    from mbtilesmap import MBTILES_NAME_PATTERN
+    from mbtilesmap import MBTILES_ID_PATTERN
 
     class MyTemplateView(TemplateView):
         def get_context_data(self, **kwargs):
@@ -102,7 +102,7 @@ having this in ``index.html`` ::
     urlpatterns = patterns('',
         ...
         ...
-        url(r'^(?P<name>%s)/$' % MBTILES_NAME_PATTERN, 
+        url(r'^(?P<name>%s)/$' % MBTILES_ID_PATTERN, 
             MyTemplateView.as_view(template_name='map.html'),
             name="map"),
 

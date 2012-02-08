@@ -1,5 +1,6 @@
 import os
 import re
+import hashlib
 
 from django.utils import simplejson
 from django.test import TestCase
@@ -43,7 +44,7 @@ class MBTilesTest(TestCase):
         # Try a folder without mbtiles
         app_settings.MBTILES_ROOT = '.'
         mgr = MBTilesManager()
-        self.failIfEqual(['france-35'], [o.name for o in mgr.all()])
+        self.failIfEqual(['france-35'], [o.id for o in mgr.all()])
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTilesManager)
 
@@ -105,5 +106,40 @@ class MBTilesTest(TestCase):
         self.failUnless(p.match(js))
         jsonp = p.match(js).group(1)
         jsonp = edict(simplejson.loads(jsonp))
+        self.failUnlessEqual('geography-class', mb.id)
         self.failUnlessEqual(mb.id, jsonp.id)
         self.failUnlessEqual(mb.name, jsonp.name)
+        self.failUnlessEqual(mb.center, tuple(jsonp.center))
+        self.failUnlessEqual([2.3401, 48.8503, 3], jsonp.center)
+
+    def test_tile(self):
+        mb = MBTiles('geography-class')
+        tile = mb.tile(3, 4, 2)
+        h = hashlib.md5(tile).hexdigest()
+        self.failUnlessEqual('e7de86eeea4e558851a7c0f6cc3082ff', h)
+
+    def test_grid(self):
+        mb = MBTiles('geography-class')
+        tile = mb.grid(3, 4, 2)
+        h = hashlib.md5(tile).hexdigest()
+        self.failUnlessEqual('8d9cf7d9d0bef7cc1f0a37b49bf4cec7', h)
+        p = re.compile("grid\((.+)\);")
+        self.failUnless(p.match(tile))
+        utfgrid = p.match(tile).group(1)
+        utfgrid = edict(simplejson.loads(utfgrid))
+        self.failUnlessEqual(utfgrid.grid[20:30], 
+            [u'       !!!!!!!!!!!######### &  $$$$$     %%%%%%%%%%%%%%%%%%%%%%%', 
+             u'        !!!!!!!!!###########     $       %%%%%%%%%%%%%%%%%%%%%%%', 
+             u"        !!!!!!!!!######## #        '''' %%%%%%%%%%%%%%%%%%%%%%%%", 
+             u"         !!!!!! ###########     ' ''''''%%%%%%%%%%%%%%%%%%%%%%%%", 
+             u"        !!!!!!  #########       ' '''''%%%%%%%%%%%%%%%%%%%%%%%%%", 
+             u"         !!!!   ########       ''''''''%%%%%%%%%%%%%%%%%%%%%%%%%", 
+             u"          !!     #######           (('''%%%%%%%%%%%%%%%%%%%%%%%%", 
+             u"               ) #######  #     (  ((('%%%%%%%%%%%%%%%%%%%%%%%%%",
+             u'              )  ######## #    ((  (((((%%%%%%%%%%%%%%%%%%%%%%%%', 
+             u'            )))   ######      ((((((((((%%%%%%%%%%%%%%%%%%%%%%%%'])
+        c = ord('#') + 32
+        if c >= 92: c = c + 1 
+        if c >= 34: c = c + 1
+        self.failUnlessEqual(utfgrid.data[str(c)]['ADMIN'], 'Estonia')
+        self.failUnlessEqual(utfgrid.data[str(c)]['POP_EST'], 1299371)

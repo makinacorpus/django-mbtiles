@@ -18,7 +18,7 @@ class MapNode(template.Node):
         
         t = template.loader.get_template('mbtilesmap/map.html')
 
-        c = template.Context({'name': name}, 
+        c = template.Context({'map': self.mbtiles}, 
                              autoescape=context.autoescape)
         return t.render(c)
 

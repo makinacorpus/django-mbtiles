@@ -82,9 +82,13 @@ class MBTiles(object):
         return self._cur
 
     @reify
+    def id(self):
+        iD, ext = os.path.splitext(self.basename)
+        return iD
+
+    @reify
     def name(self):
-        name, ext = os.path.splitext(self.basename)
-        return name
+        return self.metadata.get('name', self.id)
 
     @reify
     def filesize(self):
@@ -101,10 +105,11 @@ class MBTiles(object):
             "maxzoom": self.maxzoom,
         })
         # Additionnal info
-        tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.name, x='{x}',y='{y}',z='{z}'))
+        tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
         jsonp.update(**{
-            "id": self.name,
+            "id": self.id,
+            "name": self.name,
             "scheme": "xyz",
             "basename": self.basename,
             "filesize": self.filesize,

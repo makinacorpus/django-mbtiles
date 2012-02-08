@@ -1,10 +1,14 @@
 import os
+import re
 
+from django.utils import simplejson
 from django.test import TestCase
+from easydict import EasyDict as edict
 
-from mbtilesmap import app_settings
-from mbtilesmap.models import (MBTiles, MBTilesManager, 
-                               MBTilesFolderError, MBTilesNotFoundError)
+from . import app_settings
+from models import (MBTiles, MBTilesManager, 
+                    MBTilesFolderError, MBTilesNotFoundError)
+
 
 FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 FIXTURES_PATH = os.path.join(FILE_PATH, 'fixtures')
@@ -17,23 +21,23 @@ class MBTilesTest(TestCase):
     def test_list(self):
         # Use fixtures folder
         mgr = MBTilesManager()
-        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.name for o in mgr.all()]))
+        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
         # Can be called twice with same result
         qs = mgr.all()
-        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.name for o in qs]))
-        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.name for o in qs]))
+        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in qs]))
+        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in qs]))
         # And is refreshed
         extrafile = os.path.join(FIXTURES_PATH, 'file.mbtiles')
         open(extrafile, 'w').close()
-        self.failUnlessEqual(['file', 'france-35', 'geography-class'], sorted([o.name for o in mgr.all()]))
+        self.failUnlessEqual(['file', 'france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
         os.remove(extrafile)
         # File with different extensions are ignored
         extrafile = os.path.join(FIXTURES_PATH, 'file.wrong')
         open(extrafile, 'w').close()
-        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.name for o in mgr.all()]))
+        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
         # Except if we change the setting extension
         app_settings.MBTILES_EXT = 'wrong'
-        self.failUnlessEqual(['file'], [o.name for o in mgr.all()])
+        self.failUnlessEqual(['file'], [o.id for o in mgr.all()])
         os.remove(extrafile)
         app_settings.MBTILES_EXT = 'mbtiles'
         # Try a folder without mbtiles
@@ -66,21 +70,40 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual(3, mb.middlezoom)
         self.failUnlessEqual((2.3401, 48.8503, 3), mb.center)
 
-    def test_name(self):
+    def test_id(self):
         # full path
         mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'))
-        self.failUnlessEqual('france-35', mb.name)
+        self.failUnlessEqual('france-35', mb.id)
         # relative to MBTILES_ROOT
         mb = MBTiles('france-35.mbtiles')
-        self.failUnlessEqual('france-35', mb.name)
+        self.failUnlessEqual('france-35', mb.id)
         # with default extension
         mb = MBTiles('france-35')
-        self.failUnlessEqual('france-35', mb.name)
+        self.failUnlessEqual('france-35', mb.id)
         # Unknown file
         self.assertRaises(MBTilesNotFoundError, MBTiles, ('unknown.mbtiles'))
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTiles, ('unknown.mbtiles'))
 
+    def test_name(self):
+        # Name in metadata
+        mb = MBTiles('geography-class')
+        self.failUnlessEqual('geography-class', mb.id)
+        self.failUnlessEqual(u'Geography Class', mb.name)
+        # No name in metadata
+        mb = MBTiles('france-35')
+        self.failUnlessEqual(mb.name, mb.id)
+
     def test_filesize(self):
         mb = MBTiles('france-35')
         self.failUnlessEqual(117760, mb.filesize)
+
+    def test_jsonp(self):
+        mb = MBTiles('geography-class')
+        js = mb.jsonp('cb')
+        p = re.compile("cb\((.+)\);")
+        self.failUnless(p.match(js))
+        jsonp = p.match(js).group(1)
+        jsonp = edict(simplejson.loads(jsonp))
+        self.failUnlessEqual(mb.id, jsonp.id)
+        self.failUnlessEqual(mb.name, jsonp.name)

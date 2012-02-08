@@ -82,7 +82,7 @@ having this in ``index.html`` ::
 
     <ul>
     {% for map in maps %}
-        <li><a href="{% url map map.name %}">{{ map.name }}</a></li>
+        <li><a href="{% url map map.id %}">{{ map.name }}</a></li>
     {% endfor %}
     </ul>
 

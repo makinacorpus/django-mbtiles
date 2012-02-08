@@ -1,10 +1,10 @@
-<div id='map-{{name}}' class="map"></div>
+<div id='map-{{map.id}}' class="map"></div>
 <script>
 var mm = com.modestmaps;
-var url = '{% url mbtilesmap:jsonp name=name %}';
+var url = '{% url mbtilesmap:jsonp name=map.id %}';
 
 wax.tilejson(url, function(tilejson) {
-  var m = new mm.Map('map-{{name}}',
+  var m = new mm.Map('map-{{map.id}}',
     new wax.mm.connector(tilejson));
 
   m.setCenterZoom(new mm.Location(tilejson.center[1],

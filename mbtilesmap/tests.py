@@ -4,6 +4,7 @@ import hashlib
 
 from django.utils import simplejson
 from django.test import TestCase
+from django.core.urlresolvers import reverse
 from easydict import EasyDict as edict
 
 from . import app_settings
@@ -143,3 +144,30 @@ class MBTilesTest(TestCase):
         if c >= 34: c = c + 1
         self.failUnlessEqual(utfgrid.data[str(c)]['ADMIN'], 'Estonia')
         self.failUnlessEqual(utfgrid.data[str(c)]['POP_EST'], 1299371)
+
+    def test_status(self):
+        # Tiles
+        response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='geography-class',
+                                                                          z='2', x='2', y='1')))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-type'], 'image/png')
+        response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='class-geography',
+                                                                          z='2', x='2', y='1')))
+        self.assertEqual(response.status_code, 404)
+        response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='geography-class',
+                                                                          x='3', y='18', z='22')))
+        self.assertEqual(response.status_code, 404)
+        # UTF-grid
+        response = self.client.get(reverse('mbtilesmap:grid', kwargs=dict(name='geography-class',
+                                                                          z='2', x='2', y='1')))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
+        response = self.client.get(reverse('mbtilesmap:grid', kwargs=dict(name='geography-class',
+                                                                          x='3', y='18', z='22')))
+        self.assertEqual(response.status_code, 404)
+        # JSON-P
+        response = self.client.get(reverse('mbtilesmap:jsonp', kwargs=dict(name='geography-class')))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
+        response = self.client.get(reverse('mbtilesmap:jsonp', kwargs=dict(name='class-geography')))
+        self.assertEqual(response.status_code, 404)

@@ -27,6 +27,17 @@ def tile(request, name, z, x, y):
     raise Http404
 
 
+#TODO: cache
+def preview(request, name):
+    try:
+        mbtiles = MBTiles(name)
+        z, x, y = mbtiles.center_tile()
+        return tile(request, name, z, x, y)
+    except MBTilesNotFoundError, e:
+        logger.warning(e)
+    raise Http404
+
+
 @cache_page(app_settings.CACHE_TIMEOUT)
 def grid(request, name, z, x, y):
     """ Serve a single UTF-Grid tile """

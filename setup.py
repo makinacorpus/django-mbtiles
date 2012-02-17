@@ -13,7 +13,7 @@ setup(
     description="Serve maps from MBTiles files",
     long_description=open(os.path.join(here, 'README.rst')).read(),
     requires = ['easydict (>=1.3)',
-                'landez (>=1.6)'],
+                'landez (>=1.7)'],
     packages=find_packages(),
     include_package_data=True,
     classifiers  = ['Topic :: Utilities', 

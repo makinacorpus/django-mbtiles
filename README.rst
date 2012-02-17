@@ -59,7 +59,7 @@ Example : a MBTiles map browser
         'MBTILES_ROOT' : os.path.join(PROJECT_ROOT_PATH, 'data')
     }
 
-* An index page to list all available MBTiles files
+* An index page to list all available MBTiles files with a preview image
 
 ::
 
@@ -78,11 +78,14 @@ Example : a MBTiles map browser
         ...
     )
 
-having this in ``index.html`` ::
+with this in ``index.html`` ::
 
     <ul>
     {% for map in maps %}
-        <li><a href="{% url map map.id %}">{{ map.name }}</a></li>
+        <li>
+           <img src="{% url preview map.id %}"/>
+           <a href="{% url map map.id %}">{{ map.name }}</a>
+        </li>
     {% endfor %}
     </ul>
 

@@ -6,7 +6,8 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from landez.reader import MBTilesReader, ExtractionError
+from landez.reader import MBTilesReader, ExtractionError, InvalidFormatError
+from landez.proj import GoogleProjection
 
 from . import app_settings
 from utils import reify
@@ -40,8 +41,14 @@ class MBTilesManager(object):
         for dirname, dirnames, filenames in os.walk(self.folder):
             for filename in filenames:
                 name, ext = os.path.splitext(filename)
-                if ext == '.%s'  % app_settings.MBTILES_EXT:
-                    yield MBTiles(os.path.join(dirname, filename))
+                if ext != '.%s' % app_settings.MBTILES_EXT:
+                    continue
+                try:
+                    mb = MBTiles(os.path.join(dirname, filename))
+                    assert mb.name, _("%s name is empty !") % mb.id
+                    yield mb
+                except (AssertionError, InvalidFormatError), e:
+                    logger.error(e)
 
 
 class MBTiles(object):
@@ -134,6 +141,11 @@ class MBTiles(object):
             return self._reader.tile(z, x, y)
         except ExtractionError:
             raise MissingTileError
+
+    def center_tile(self):
+        lon, lat, zoom = self.center
+        proj = GoogleProjection(app_settings.TILE_SIZE, [zoom])
+        return proj.tile_at(zoom, (lon, lat))
 
     def grid(self, z, x, y, callback=None):
         try:

@@ -1,6 +1,7 @@
 import os
 import re
 import hashlib
+import shutil
 
 from django.utils import simplejson
 from django.test import TestCase
@@ -30,12 +31,12 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in qs]))
         # And is refreshed
         extrafile = os.path.join(FIXTURES_PATH, 'file.mbtiles')
-        open(extrafile, 'w').close()
+        shutil.copyfile(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), extrafile)
         self.failUnlessEqual(['file', 'france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
         os.remove(extrafile)
         # File with different extensions are ignored
         extrafile = os.path.join(FIXTURES_PATH, 'file.wrong')
-        open(extrafile, 'w').close()
+        shutil.copyfile(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), extrafile)
         self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
         # Except if we change the setting extension
         app_settings.MBTILES_EXT = 'wrong'
@@ -46,6 +47,12 @@ class MBTilesTest(TestCase):
         app_settings.MBTILES_ROOT = '.'
         mgr = MBTilesManager()
         self.failIfEqual(['france-35'], [o.id for o in mgr.all()])
+        # Try with a bad (=empty) mbtiles file
+        extrafile = os.path.join(FIXTURES_PATH, 'file.png')
+        self.failIfEqual(['file'], [o.id for o in mgr.all()])
+        open(extrafile, 'w').close()
+        os.remove(extrafile)
+        # Try a unexisting folder
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTilesManager)
 
@@ -119,6 +126,20 @@ class MBTilesTest(TestCase):
         h = hashlib.md5(tile).hexdigest()
         self.failUnlessEqual('e7de86eeea4e558851a7c0f6cc3082ff', h)
 
+    def test_preview(self):
+        mb = MBTiles('geography-class')
+        self.failUnlessEqual((2.3401, 48.8503, 3), mb.center)
+        center = mb.center_tile()
+        self.failUnlessEqual((3, 4, 2), center)
+        h = hashlib.md5(mb.tile(*center)).hexdigest()
+        self.failUnlessEqual('e7de86eeea4e558851a7c0f6cc3082ff', h)
+        # HTTP
+        response = self.client.get(reverse('mbtilesmap:preview', kwargs={'name':'geography-class'}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-type'], 'image/png')
+        response = self.client.get(reverse('mbtilesmap:preview', kwargs={'name':'unknown'}))
+        self.assertEqual(response.status_code, 404)
+
     def test_grid(self):
         mb = MBTiles('geography-class')
         tile = mb.grid(3, 4, 2)
@@ -173,7 +194,6 @@ class MBTilesTest(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_patterns(self):
-        
         self.failUnlessEqual('/geography-class/2/2/1.png', reverse('mbtilesmap:tile', kwargs=dict(name='geography-class', z='2', x='2', y='1')))
         self.failUnlessEqual('/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png', reverse('mbtilesmap:tile', kwargs=dict(name='geography-class', z='{z}', x='{x}', y='{y}')))
         self.assertRaises(NoReverseMatch, reverse, ('mbtilesmap:tile'), kwargs=dict(name='geography-class', z='{z}', x='{y}', y='{x}'))
@@ -188,4 +208,3 @@ class MBTilesTest(TestCase):
         self.failIf(p.match('file+1234'))
         self.failIf(p.match('file/1234'))
         self.failIf(p.match('file"'))
-

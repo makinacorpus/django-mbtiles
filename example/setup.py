@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf8 -*-
 import os
 from distutils.core import setup
 from setuptools import find_packages
@@ -5,16 +7,14 @@ from setuptools import find_packages
 here = os.path.abspath(os.path.dirname(__file__))
 
 setup(
-    name='django-mbtiles',
+    name='livembtiles',
     version='1.0',
     author='Mathieu Leplatre',
     author_email='mathieu.leplatre@makina-corpus.com',
     url='https://github.com/makinacorpus/django-mbtiles',
-    download_url = "http://pypi.python.org/pypi/django-mbtiles/",
-    description="Serve maps from MBTiles files using Django",
+    description="Map browser as an example project for django-mbtiles.",
     long_description=open(os.path.join(here, 'README.rst')).read(),
-    requires = ['easydict (>=1.3)',
-                'landez (==1.7)'],
+    requires = ['django_mbtiles (==1.0)'],
     packages=find_packages(),
     classifiers  = ['Topic :: Utilities', 
                     'Natural Language :: English',

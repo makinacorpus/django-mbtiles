@@ -1,0 +1,24 @@
+upstream app_server {
+    server ${init-gunicorn:bind}:${init-gunicorn:port} fail_timeout=0;
+}
+
+server {
+    listen ${nginx-conf:port} default;
+    server_name _;
+
+    keepalive_timeout 5;
+
+    location ${nginx-conf:staticurl} {
+        alias ${nginx-conf:staticroot};
+    }
+    location / {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_redirect off;
+
+        if (!-f $request_filename) {
+            proxy_pass http://app_server;
+            break;
+        }
+    }
+}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load mbtilesmap_tags %}
+
+{% block head %}
+{{ block.super }}
+{% include "mbtilesmap/head.html" %} 
+{% endblock head %}
+
+{% block body %}
+{% mbtilesmap name %}
+{% endblock body %}

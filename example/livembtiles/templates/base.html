@@ -1,0 +1,13 @@
+{% load static %}
+<html>
+  <head>
+    {% block head %}
+    {% endblock head %}
+    <link href="{% get_static_prefix %}style.css" rel="stylesheet" type="text/css" />
+  </head>
+  <body>
+    {% block body %}
+    {% endblock body %}
+  <p id="credits">Powered by <a href="https://github.com/makinacorpus/django-mbtiles">django-mbtiles</a> — It is Free Software, <a href="https://github.com/makinacorpus/livetitude">you can contribute on GitHub</a> ! — Developed by <a href="http://www.makina-corpus.com">Makina Corpus</a></p>
+  </body>
+</html>

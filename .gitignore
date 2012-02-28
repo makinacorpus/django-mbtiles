@@ -1,1 +1,9 @@
 *.pyc
+
+# buildout
+build
+dist
+eggs
+develop-eggs
+*.egg-info
+.installed.cfg

@@ -1,0 +1,48 @@
+#credits {
+  font-size: 13px;
+  text-align: center;
+}
+
+.map-preview {
+  display: inline-block;
+  padding: 5px;
+  margin: 2px;
+  border: 1px solid gray;
+  
+  -moz-box-shadow: 3px 3px 3px #ddd;
+  -webkit-box-shadow: 3px 3px 3px #ddd;
+  box-shadow: 3px 3px 3px #ddd;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+}
+
+.map-preview img {
+  opacity: 0.5;
+}
+
+.map-preview img:hover {
+  opacity: 1;
+}
+
+.map-preview .map-title {
+  display: block;
+  font-size: 12px;
+  text-align: center;
+}
+
+.map {
+  height: 100%;
+}
+
+.wax-tooltip {
+  width: 200px;
+  right: 10px;
+  left: auto;
+}
+.wax-legends ul {
+  margin: 0px;
+  padding: 0px;
+}
+.wax-legends li {
+  list-style-type: none;
+}

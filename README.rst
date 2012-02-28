@@ -1,12 +1,9 @@
-==============
-Django-mbtiles
-==============
+*django-mbtiles* serve maps from MBTiles files using Django. 
+It mainly relies on `landez <https://github.com/makinacorpus/landez/>`_.
 
-Serve maps from MBTiles files
-
-
-Installation
-############
+=======
+INSTALL
+=======
 
 ::
 
@@ -14,8 +11,9 @@ Installation
     python setup.py install
 
 
-Usage
-#####
+=====
+USAGE
+=====
 
 * Add ``mbtilesmap`` to your ``INSTALLED_APPS``
 * Make sure you have ``'django.core.context_processors.static'`` in your `context processors <https://docs.djangoproject.com/en/dev/howto/static-files/#with-a-context-processor>`_
@@ -46,84 +44,26 @@ Usage
     {% mbtilesmap filename %}
 
 
-Example : a MBTiles map browser
--------------------------------
-* Configure default MBTiles folder to load files by their name
+Example
+=======
 
-::
+You can find a working demo project (MBTiles maps browser *livembtiles*) 
+in the ``example/`` folder of the source tree (see dedicated ``README.rst`` file).
 
-    # settings.py
-    PROJECT_ROOT_PATH = os.path.dirname(os.path.abspath(__file__))
+=======
+AUTHORS
+=======
+
+    * Mathieu Leplatre <mathieu.leplatre@makina-corpus.com>
     
-    MBTILES_APP_CONFIG  =  {
-        'MBTILES_ROOT' : os.path.join(PROJECT_ROOT_PATH, 'data')
-    }
+|makinacom|_
 
-* An index page to list all available MBTiles files with a preview image
-
-::
-
-    # urls.py
-    from django.views.generic import ListView
-    
-    from mbtilesmap.models import MBTiles
-    
-    urlpatterns = patterns('',
-        url(r'^$', 
-            ListView.as_view(queryset=MBTiles.objects.all(),
-                             context_object_name='maps',
-                             template_name='index.html'),
-            name='index')
-        ...
-        ...
-    )
-
-with this in ``index.html`` ::
-
-    <ul>
-    {% for map in maps %}
-        <li>
-           <img src="{% url preview map.id %}"/>
-           <a href="{% url map map.id %}">{{ map.name }}</a>
-        </li>
-    {% endfor %}
-    </ul>
+.. |makinacom| image:: http://depot.makina-corpus.org/public/logo.gif
+.. _makinacom:  http://www.makina-corpus.com
 
 
-* A unique page for all maps (*complete previous* ``urls.py``):
+=======
+LICENSE
+=======
 
-::
-
-    # urls.py 
-    from django.views.generic import TemplateView
-    from mbtilesmap import MBTILES_ID_PATTERN
-
-    class MyTemplateView(TemplateView):
-        def get_context_data(self, **kwargs):
-            return self.kwargs
-
-    urlpatterns = patterns('',
-        ...
-        ...
-        url(r'^(?P<name>%s)/$' % MBTILES_ID_PATTERN, 
-            MyTemplateView.as_view(template_name='map.html'),
-            name="map"),
-
-        url(r'^', include('mbtilesmap.urls', namespace='mb', app_name='mbtilesmap')),
-    )
-
-
-with this in ``map.html`` 
-
-::
-
-    {% load mbtilesmap_tags %}
-    
-    {% block head %}
-    {% include "mbtilesmap/head.html" %}
-    {{ block.super }}
-    {% endblock head %}
-
-    {% block body %}
-    {% mbtilesmap name %}
-    {% endblock body %}
+    * Lesser GNU Public License

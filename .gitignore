@@ -4,6 +4,12 @@
 build
 dist
 eggs
+parts
 develop-eggs
 *.egg-info
 .installed.cfg
+
+# example project
+example/bin
+example/etc
+

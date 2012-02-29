@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf8 -*-
 import os
-from distutils.core import setup
-from setuptools import find_packages
+from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -14,7 +13,8 @@ setup(
     url='https://github.com/makinacorpus/django-mbtiles',
     description="Map browser as an example project for django-mbtiles.",
     long_description=open(os.path.join(here, 'README.rst')).read(),
-    requires = ['django_mbtiles (==1.0)'],
+    install_requires = ['django == 1.3.1',
+                        'django_mbtiles == 1.0'],
     packages=find_packages(),
     classifiers  = ['Topic :: Utilities', 
                     'Natural Language :: English',

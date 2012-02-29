@@ -1,6 +1,5 @@
 import os
-from distutils.core import setup
-from setuptools import find_packages
+from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -13,8 +12,7 @@ setup(
     download_url = "http://pypi.python.org/pypi/django-mbtiles/",
     description="Serve maps from MBTiles files using Django",
     long_description=open(os.path.join(here, 'README.rst')).read(),
-    requires = ['easydict (>=1.3)',
-                'landez (==1.7)'],
+    install_requires = open(os.path.join(here, 'requirements.txt')).readlines(),
     packages=find_packages(),
     classifiers  = ['Topic :: Utilities', 
                     'Natural Language :: English',

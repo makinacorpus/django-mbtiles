@@ -55,6 +55,7 @@ AUTHORS
 =======
 
     * Mathieu Leplatre <mathieu.leplatre@makina-corpus.com>
+    * `Andreas Trawoeger <https://github.com/atrawog>`_ 
     
 |makinacom|_
 

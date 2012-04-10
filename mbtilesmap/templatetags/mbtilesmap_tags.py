@@ -1,10 +1,15 @@
 from django import template
-from django.conf import settings
 
 from mbtilesmap.models import MBTiles
 
 
 register = template.Library()
+
+
+@register.simple_tag
+def mbtilesmap_head():
+    c = template.Context()
+    return template.loader.get_template('mbtilesmap/head.html').render(c)
 
 
 class MapNode(template.Node):
@@ -15,10 +20,10 @@ class MapNode(template.Node):
     def render(self, context):
         name = self.name.resolve(context)
         self.mbtiles = MBTiles(name)
-        
+
         t = template.loader.get_template('mbtilesmap/map.html')
 
-        c = template.Context({'map': self.mbtiles}, 
+        c = template.Context({'map': self.mbtiles},
                              autoescape=context.autoescape)
         return t.render(c)
 

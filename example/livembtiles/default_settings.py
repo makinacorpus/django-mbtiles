@@ -108,11 +108,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.core.context_processors.static',
-)
-
-
 ROOT_URLCONF = 'livembtiles.urls'
 
 TEMPLATE_DIRS = (

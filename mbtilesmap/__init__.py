@@ -9,4 +9,5 @@ app_settings = EasyDict(dict(
     MBTILES_ROOT = settings.MEDIA_ROOT,
     TILE_SIZE = 256,
     CACHE_TIMEOUT = 60 * 60,  # 1 hour
+    MISSING_TILE_404 = False,
 ), **getattr(settings, 'MBTILES_APP_CONFIG', {}))

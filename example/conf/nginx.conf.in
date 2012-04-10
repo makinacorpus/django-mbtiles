@@ -1,24 +1,33 @@
 upstream app_server {
-    server ${init-gunicorn:bind}:${init-gunicorn:port} fail_timeout=0;
+    server ${parts['init-gunicorn'].bind}:${parts['init-gunicorn'].port} fail_timeout=0;
 }
 
 server {
-    listen ${nginx-conf:port} default;
+    listen ${parts['nginx-conf'].port} default;
     server_name _;
 
     keepalive_timeout 5;
 
-    location ${nginx-conf:staticurl} {
-        alias ${nginx-conf:staticroot};
+    location ${parts['nginx-conf'].staticurl} {
+        alias ${parts['nginx-conf'].staticroot};
     }
+
     location / {
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+        proxy_set_header Host $$http_host;
         proxy_redirect off;
 
-        if (!-f $request_filename) {
-            proxy_pass http://app_server;
-            break;
+        {% if parts['nginx-conf'].cache in ['True', 'true'] %}
+            proxy_cache             ${parts['nginx-conf'].cachename};
+            proxy_cache_key         $$scheme$$host$$uri$$is_args$$args;
+            proxy_cache_valid       200  ${parts['nginx-conf'].cachetime};
+            proxy_cache_use_stale   error timeout invalid_header;
+        {% end %}
+
+        if ( $$uri ~* \.(css|js|json|jonsp|png) ) {
+            expires ${parts['nginx-conf'].expiretime};
         }
+
+        proxy_pass  http://app_server;
     }
 }

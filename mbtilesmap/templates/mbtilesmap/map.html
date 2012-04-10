@@ -5,7 +5,13 @@ var url = '{% url mbtilesmap:jsonp name=map.id %}';
 
 wax.tilejson(url, function(tilejson) {
   var m = new mm.Map('map-{{map.id}}',
-    new wax.mm.connector(tilejson));
+    new wax.mm.connector(tilejson),
+    null, [
+        new easey.DragHandler(),
+        new easey.TouchHandler(),
+        new easey.DoubleClickHandler(),
+        new easey.MouseWheelHandler()
+    ]);
 
   m.setCenterZoom(new mm.Location(tilejson.center[1],
                                   tilejson.center[0]),

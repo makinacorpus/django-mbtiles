@@ -35,7 +35,7 @@ USAGE
     {% load mbtilesmap_tags %}
     ...
     {% block head %}
-    {% include "mbtilesmap/head.html" %}
+    {% mbtilesmap_head %}
     {{ block.super }}
     {% endblock head %}
     
@@ -49,6 +49,36 @@ Example
 
 You can find a working demo project (MBTiles maps browser *livembtiles*) 
 in the ``example/`` folder of the source tree (see dedicated ``README.rst`` file).
+
+
+Cache with nginx
+================
+
+* Declare a cache zone in the ``http`` section :
+
+::
+
+    http {
+        ...
+        proxy_cache_path  /var/cache/nginx levels=1:2 keys_zone=master:10m inactive=7d max_size=1g;
+        proxy_temp_path /var/tmp/nginx;
+    }
+
+Cache name will be ``master``, index will be ``10m``, will last ``7d`` and have a maximum size of ``1g``.
+
+* Serve from cache for a specific location :
+
+::
+    location @proxy {
+        ...
+        proxy_cache             master;
+        proxy_cache_key         $$scheme$$host$$uri$$is_args$$args;
+        proxy_cache_valid       200  7d;
+        proxy_cache_use_stale   error timeout invalid_header;
+    }
+
+See *example* project's buildout for deployment automation.
+
 
 =======
 AUTHORS

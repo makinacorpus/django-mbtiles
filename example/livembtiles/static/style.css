@@ -1,6 +1,10 @@
 #credits {
   font-size: 13px;
   text-align: center;
+  position: absolute;
+  bottom: 0px;
+  width: 100%;
+  background-color: white;
 }
 
 .map-preview {
@@ -30,19 +34,117 @@
   text-align: center;
 }
 
+/*
+ * Map page
+ */
+
 .map {
   height: 100%;
 }
 
+.zoomer {
+  display: none; 
+}
+
+
+/*
+ * Tooltips
+ */
+ 
 .wax-tooltip {
   width: 200px;
   right: 10px;
   left: auto;
+  
+  background-color: white;
+  color: #555;
+
+  -moz-box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
+  -webkit-box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
+  box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
+  -moz-border-radius: 5px;
+  border-radius: 5px;
 }
+
+
+/*
+ * Legend
+ */
+
+.wax-legends {
+   bottom:25px;
+}
+
+.wax-legends .wax-legend {
+  background-color: white;
+  color: #555;
+}
+
 .wax-legends ul {
   margin: 0px;
   padding: 0px;
 }
+
 .wax-legends li {
   list-style-type: none;
+}
+
+.wax-legend {
+  background-color: white;
+
+  padding: 5px;
+  margin: 2px;
+  border: 1px solid gray;
+
+  -moz-box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
+  -webkit-box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
+  box-shadow: 3px 3px 3px rgba(0,0,0,0.3);
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+
+}
+
+.wax-legend .title {
+    text-align: left;
+    margin-bottom: 8px;
+    font-weight: bold;
+    font-size: 90%;
+}
+
+.wax-legend .scale ul {
+    margin: 0;
+    padding: 0;
+    float: left;
+    list-style: none;
+}
+
+.wax-legend .scale ul li {
+    display: block;
+    float: left;
+    width: 50px;
+    margin-bottom: 6px;
+    text-align: center;
+    font-size: 80%;
+    list-style: none;
+}
+
+.wax-legend ul.labels li span {
+    height: 15px;
+    width: 50px;
+}
+
+.wax-legend ul li span {
+    display: block;
+    float: left;
+}
+
+.wax-legend .source {
+    font-size: 70%;
+    color: #999;
+    clear: both;
+}
+
+.wax-attribution a,
+  .wax-legend a {
+    color: #777;
 }

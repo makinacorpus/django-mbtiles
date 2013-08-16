@@ -8,14 +8,13 @@ Install dependencies :
 
 ::
 
-    python bootstrap.py
-    bin/buildout -Nvc buildout.cfg
+    make install
 
 Run development server :
 
 ::
 
-    bin/django runserver
+    make serve
 
 ==========
 DEPLOYMENT
@@ -23,7 +22,7 @@ DEPLOYMENT
 
 ::
 
-    bin/buildout -Nvc buildout.cfg
+    make install 
 
 Then as root :
 

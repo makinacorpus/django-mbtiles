@@ -69,6 +69,7 @@ Cache name will be ``master``, index will be ``10m``, will last ``7d`` and have 
 * Serve from cache for a specific location :
 
 ::
+
     location @proxy {
         ...
         proxy_cache             master;

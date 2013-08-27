@@ -43,7 +43,7 @@ def preview(request, name):
 @cache_page(app_settings.CACHE_TIMEOUT)
 def grid(request, name, z, x, y):
     """ Serve a single UTF-Grid tile """
-    callback = request.GET.get('callback', 'grid')
+    callback = request.GET.get('callback', None)
     try:
         mbtiles = MBTiles(name)
         return HttpResponse(

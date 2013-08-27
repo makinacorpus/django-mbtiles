@@ -58,7 +58,7 @@ def grid(request, name, z, x, y):
 
 
 @cache_page(app_settings.CACHE_TIMEOUT)
-def jsonp(request, name):
+def tilejson(request, name):
     """ Serve the map configuration as JSONP """
     callback = request.GET.get('callback', 'grid')
     try:

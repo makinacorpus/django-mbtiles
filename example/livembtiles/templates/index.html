@@ -3,8 +3,8 @@
 {% block body %}
     {% for map in maps %}
         <div class="map-preview">
-            <a href="{% url map map.id %}">
-                <img src="{% url mbtilesmap:preview map.id %}"/>
+            <a href="{% url "map" map.id %}">
+                <img src="{% url "mbtilesmap:preview" map.id %}"/>
                 <span class="map-title">{{ map.name }}</span>
             </a>
         </div>

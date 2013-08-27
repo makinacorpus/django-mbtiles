@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 import logging
+import json
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.utils import simplejson
 from django.utils.translation import ugettext as _
 from landez.sources import MBTilesReader, ExtractionError, InvalidFormatError
 from landez.proj import GoogleProjection
@@ -175,4 +175,4 @@ class MBTiles(object):
             "filesize": self.filesize,
             "tiles": [tilepattern],
         })
-        return '%s(%s);' % (callback, simplejson.dumps(jsonp))
+        return '%s(%s);' % (callback, json.dumps(jsonp))

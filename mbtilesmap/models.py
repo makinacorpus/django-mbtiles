@@ -6,7 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.utils import simplejson
 from django.utils.translation import ugettext as _
-from landez.reader import MBTilesReader, ExtractionError, InvalidFormatError
+from landez.sources import MBTilesReader, ExtractionError, InvalidFormatError
 from landez.proj import GoogleProjection
 
 from . import app_settings

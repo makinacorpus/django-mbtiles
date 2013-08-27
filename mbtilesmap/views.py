@@ -64,7 +64,7 @@ def tilejson(request, name):
     try:
         mbtiles = MBTiles(name)
         return HttpResponse(
-            mbtiles.jsonp(callback),
+            mbtiles.jsonp(request, callback),
             content_type = 'application/javascript; charset=utf8'
         )
     except MBTilesNotFoundError, e:

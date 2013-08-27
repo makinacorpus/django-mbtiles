@@ -153,7 +153,7 @@ class MBTiles(object):
         except ExtractionError:
             raise MissingTileError
 
-    def jsonp(self, callback):
+    def jsonp(self, request, callback):
         # Raw metadata
         jsonp = dict(self.metadata)
         # Post-processed metadata
@@ -165,6 +165,7 @@ class MBTiles(object):
         })
         # Additionnal info
         tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
+        tilepattern = request.build_absolute_uri(tilepattern)
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
         jsonp.update(**{
             "id": self.id,

@@ -1,0 +1,16 @@
+{% load static %}
+<html>
+  <head>
+    {% block head %}
+      <link href="{% static "style.css" %}" rel="stylesheet" type="text/css" />
+      <link rel="shortcut icon" type="image/x-icon" href="http://makina-corpus.com/favicon.ico" />
+    {% endblock head %}
+  </head>
+  <body>
+    {% block body %}
+    {% endblock body %}
+    {% block footer %}
+      <p id="credits">Powered by <a href="https://github.com/makinacorpus/django-mbtiles">django-mbtiles</a> — It is Free Software, <a href="https://github.com/makinacorpus/livetitude">you can contribute on GitHub</a> ! — Developed by <a href="http://www.makina-corpus.com">Makina Corpus</a></p>
+    {% endblock footer %}
+  </body>
+</html>

@@ -8,7 +8,7 @@ serve: bin/python
 	bin/python ./manage.py runserver 8888
 
 deploy: bin/python
-	bin/django collectstatic --clear --noinput --verbosity=0
+	bin/python ./manage.py collectstatic --clear --noinput --verbosity=0
 	touch livembtiles/wsgi.py  # trigger reload
 
 clean:

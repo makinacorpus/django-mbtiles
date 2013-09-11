@@ -1,15 +1,15 @@
 {% extends "base.html" %}
+{% load i18n %}
 
 {% block body %}
     {% for map in maps %}
         <div class="map-preview">
-            <a href="{% url "map" map.id %}">
-                <img src="{% url "mbtilesmap:preview" map.id %}"/>
+            <a href="{% url "preview" catalog map.id %}">
+                <img src="{% url "mbtilesmap:preview" catalog map.id %}"/>
                 <span class="map-title">{{ map.name }}</span>
             </a>
         </div>
     {% empty %}
-        Folder has no MBTiles file :
-        <pre>MBTILES_APP_CONFIG["MBTILES_ROOT"]</pre>
+        {% trans "Catalog folder is empty." %}
     {% endfor %}
 {% endblock body %}

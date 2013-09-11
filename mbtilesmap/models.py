@@ -30,8 +30,9 @@ class MBTilesFolderError(ImproperlyConfigured):
 class MBTilesManager(object):
     """ List available MBTiles in MBTILES_ROOT """
     def __init__(self, *args, **kwargs):
-        if not os.path.exists(app_settings.MBTILES_ROOT):
-            raise MBTilesFolderError()
+        for path in self._paths:
+            if not os.path.exists(path):
+                raise MBTilesFolderError()
         self.folder = app_settings.MBTILES_ROOT
 
     def all(self):

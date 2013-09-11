@@ -64,6 +64,20 @@ class MBTilesManagerTest(TestCase):
 
 class MBTilesManagerCatalogsTest(MBTilesManagerTest):
 
+    def setUp(self):
+        super(MBTilesManagerCatalogsTest, self).setUp()
+        try:
+            os.mkdir('/tmp/pouet')
+        except OSError:
+            pass
+
+    def tearDown(self):
+        super(MBTilesManagerCatalogsTest, self).tearDown()
+        try:
+            os.remove('/tmp/pouet')
+        except OSError:
+            pass
+
     def test_transparent_if_catalog_is_default(self):
         fullpath = self.mgr.catalog_path('fixtures')
         self.assertEqual(fullpath, app_settings.MBTILES_ROOT)
@@ -79,6 +93,14 @@ class MBTilesManagerCatalogsTest(MBTilesManagerTest):
         app_settings.MBTILES_ROOT = "/tmp/pouet:" + app_settings.MBTILES_ROOT
         default = self.mgr.default_catalog()
         self.assertEqual(default, 'pouet')
+
+    def test_manager_should_support_multiple_folders(self):
+        app_settings.MBTILES_ROOT = "/tmp/pouet:" + app_settings.MBTILES_ROOT
+        MBTilesManager()
+
+    def test_manager_should_fail_if_folder_does_not_exist(self):
+        app_settings.MBTILES_ROOT = "/tmp/paf:" + app_settings.MBTILES_ROOT
+        self.assertRaises(MBTilesFolderError, MBTilesManager)
 
 
 class MBTilesModelTest(TestCase):

@@ -50,6 +50,13 @@ class MBTilesManager(object):
                 except (AssertionError, InvalidFormatError), e:
                     logger.error(e)
 
+    def catalog_path(self, catalog):
+        try:
+            paths = app_settings.MBTILES_ROOT.split(':')
+            return [p for p in paths if p.endswith(catalog)][0]
+        except IndexError:
+            raise MBTilesNotFoundError(_("Catalog '%s' not found.") % catalog)
+
 
 class MBTiles(object):
     """ Represent a MBTiles file """

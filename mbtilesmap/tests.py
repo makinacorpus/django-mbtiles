@@ -16,11 +16,10 @@ from models import (MBTiles, MBTilesManager,
 
 FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 FIXTURES_PATH = os.path.join(FILE_PATH, 'fixtures')
+app_settings.MBTILES_ROOT = FIXTURES_PATH
 
 
-class MBTilesTest(TestCase):
-    def setUp(self):
-        app_settings.MBTILES_ROOT = FIXTURES_PATH
+class MBTilesManagerTest(TestCase):
 
     def test_list(self):
         # Use fixtures folder
@@ -45,17 +44,24 @@ class MBTilesTest(TestCase):
         os.remove(extrafile)
         app_settings.MBTILES_EXT = 'mbtiles'
         # Try a folder without mbtiles
+        before = app_settings.MBTILES_ROOT
         app_settings.MBTILES_ROOT = '.'
         mgr = MBTilesManager()
         self.failIfEqual(['france-35'], [o.id for o in mgr.all()])
+        app_settings.MBTILES_ROOT = before
         # Try with a bad (=empty) mbtiles file
         extrafile = os.path.join(FIXTURES_PATH, 'file.png')
         self.failIfEqual(['file'], [o.id for o in mgr.all()])
         open(extrafile, 'w').close()
         os.remove(extrafile)
         # Try a unexisting folder
+        before = app_settings.MBTILES_ROOT
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTilesManager)
+        app_settings.MBTILES_ROOT = before
+
+
+class MBTilesModelTest(TestCase):
 
     def test_bounds(self):
         mb = MBTiles('france-35')
@@ -92,8 +98,10 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual('france-35', mb.id)
         # Unknown file
         self.assertRaises(MBTilesNotFoundError, MBTiles, ('unknown.mbtiles'))
+        before = app_settings.MBTILES_ROOT
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTiles, ('unknown.mbtiles'))
+        app_settings.MBTILES_ROOT = before
 
     def test_name(self):
         # Name in metadata
@@ -107,6 +115,9 @@ class MBTilesTest(TestCase):
     def test_filesize(self):
         mb = MBTiles('france-35')
         self.failUnlessEqual(117760, mb.filesize)
+
+
+class MBTilesContentTest(TestCase):
 
     def test_jsonp(self):
         request = RequestFactory().get('/')
@@ -168,47 +179,61 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual(utfgrid.data[str(c)]['ADMIN'], 'Estonia')
         self.failUnlessEqual(utfgrid.data[str(c)]['POP_EST'], 1299371)
 
-    def test_status(self):
+
+class MBTilesContentViewsTest(TestCase):
+
+    def test_should_serve_image_if_exists(self):
         # Tiles
         response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='geography-class',
                                                                           z='2', x='2', y='1')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-type'], 'image/png')
+
+    def test_should_serve_404_if_mbtiles_missing(self):
         response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='class-geography',
                                                                           z='2', x='2', y='1')))
         self.assertEqual(response.status_code, 404)
 
+    def test_should_serve_empty_if_tile_missing(self):
         response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='geography-class',
                                                                           x='3', y='18', z='22')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '')
 
+    def test_should_serve_404_if_tile_missing_setting(self):
         app_settings.MISSING_TILE_404 = True
         response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='geography-class',
                                                                           x='3', y='18', z='22')))
         self.assertEqual(response.status_code, 404)
+        app_settings.MISSING_TILE_404 = False
 
-        # UTF-grid
+    def test_should_serve_grid_if_exists(self):
         response = self.client.get(reverse('mbtilesmap:grid', kwargs=dict(name='geography-class',
                                                                           z='2', x='2', y='1')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
+
+    def test_should_serve_404_if_grid_missing(self):
         response = self.client.get(reverse('mbtilesmap:grid', kwargs=dict(name='geography-class',
                                                                           x='3', y='18', z='22')))
         self.assertEqual(response.status_code, 404)
-        # JSON-P
+
+    def test_should_serve_tilejson_if_exists(self):
         response = self.client.get(reverse('mbtilesmap:tilejson', kwargs=dict(name='geography-class')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
+
+    def test_should_serve__404_if_mbtiles_tilejson_missing(self):
         response = self.client.get(reverse('mbtilesmap:tilejson', kwargs=dict(name='class-geography')))
         self.assertEqual(response.status_code, 404)
 
-    def test_patterns(self):
+    def test_url_patterns(self):
         self.failUnlessEqual('/geography-class/2/2/1.png', reverse('mbtilesmap:tile', kwargs=dict(name='geography-class', z='2', x='2', y='1')))
         self.failUnlessEqual('/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png', reverse('mbtilesmap:tile', kwargs=dict(name='geography-class', z='{z}', x='{x}', y='{y}')))
         self.assertRaises(NoReverseMatch, reverse, ('mbtilesmap:tile'), kwargs=dict(name='geography-class', z='{z}', x='{y}', y='{x}'))
         self.assertRaises(NoReverseMatch, reverse, ('mbtilesmap:tile'), kwargs=dict(name='geography-class', z='z', x='y', y='x'))
 
+    def test_patterns_filenames_match(self):
         p = re.compile('^%s$' % MBTILES_ID_PATTERN)
         self.failUnless(p.match('file.subname'))
         self.failUnless(p.match('file.subname.mbtiles'))

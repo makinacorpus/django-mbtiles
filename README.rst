@@ -5,10 +5,19 @@ It mainly relies on `landez <https://github.com/makinacorpus/landez/>`_.
 INSTALL
 =======
 
+Last stable version:
+
 ::
 
-    pip install -r requirements.txt
-    python setup.py install
+    pip install django-mbtiles
+
+
+Last development version:
+
+::
+
+    pip install -e git+https://github.com/makinacorpus/django-mbtiles.git#egg=django-mbtiles
+
 
 
 =====
@@ -42,6 +51,15 @@ USAGE
     ...
     ...
     {% mbtilesmap filename %}
+
+
+MBTiles files can be loaded with relative paths, based on ``MBTILES_ROOT`` setting.
+
+::
+
+   MBTILES_APP_CONFIG = {
+       'MBTILES_ROOT': '/data/files:/home/maps'
+   }
 
 
 Example
@@ -99,3 +117,19 @@ LICENSE
 =======
 
     * Lesser GNU Public License
+
+
+=========
+CHANGELOG
+=========
+
+1.1 (2013-09-11)
+----------------
+
+* Add ability to load MBTiles files from several folders
+
+1.0
+---
+
+* Initial version
+

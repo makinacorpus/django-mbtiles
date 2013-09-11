@@ -22,8 +22,8 @@ def tile(request, name, z, x, y):
         logger.warning(e)
     except MissingTileError:
         logger.warning(_("Tile %s not available in %s") % ((z, x, y), name))
-    if not app_settings.MISSING_TILE_404:
-        return HttpResponse(mimetype="image/png")
+        if not app_settings.MISSING_TILE_404:
+            return HttpResponse(mimetype="image/png")
     raise Http404
 
 

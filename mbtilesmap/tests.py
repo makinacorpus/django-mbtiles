@@ -5,6 +5,7 @@ import shutil
 
 from django.utils import simplejson
 from django.test import TestCase
+from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse, NoReverseMatch
 from easydict import EasyDict as edict
 
@@ -108,8 +109,9 @@ class MBTilesTest(TestCase):
         self.failUnlessEqual(117760, mb.filesize)
 
     def test_jsonp(self):
+        request = RequestFactory().get('/')
         mb = MBTiles('geography-class')
-        js = mb.jsonp('cb')
+        js = mb.jsonp(request, 'cb')
         p = re.compile("cb\((.+)\);")
         self.failUnless(p.match(js))
         jsonp = p.match(js).group(1)
@@ -142,7 +144,7 @@ class MBTilesTest(TestCase):
 
     def test_grid(self):
         mb = MBTiles('geography-class')
-        tile = mb.grid(3, 4, 2)
+        tile = mb.grid(3, 4, 2, callback='grid')
         h = hashlib.md5(tile).hexdigest()
         self.failUnlessEqual('8d9cf7d9d0bef7cc1f0a37b49bf4cec7', h)
         p = re.compile("grid\((.+)\);")
@@ -175,9 +177,17 @@ class MBTilesTest(TestCase):
         response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='class-geography',
                                                                           z='2', x='2', y='1')))
         self.assertEqual(response.status_code, 404)
+
+        response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='geography-class',
+                                                                          x='3', y='18', z='22')))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, '')
+
+        app_settings.MISSING_TILE_404 = True
         response = self.client.get(reverse('mbtilesmap:tile', kwargs=dict(name='geography-class',
                                                                           x='3', y='18', z='22')))
         self.assertEqual(response.status_code, 404)
+
         # UTF-grid
         response = self.client.get(reverse('mbtilesmap:grid', kwargs=dict(name='geography-class',
                                                                           z='2', x='2', y='1')))
@@ -187,10 +197,10 @@ class MBTilesTest(TestCase):
                                                                           x='3', y='18', z='22')))
         self.assertEqual(response.status_code, 404)
         # JSON-P
-        response = self.client.get(reverse('mbtilesmap:jsonp', kwargs=dict(name='geography-class')))
+        response = self.client.get(reverse('mbtilesmap:tilejson', kwargs=dict(name='geography-class')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
-        response = self.client.get(reverse('mbtilesmap:jsonp', kwargs=dict(name='class-geography')))
+        response = self.client.get(reverse('mbtilesmap:tilejson', kwargs=dict(name='class-geography')))
         self.assertEqual(response.status_code, 404)
 
     def test_patterns(self):

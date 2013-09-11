@@ -1,4 +1,4 @@
-include README.rst
+include README.rst requirements.txt
 recursive-include mbtilesmap/templates *.html
 recursive-include mbtilesmap/static *.js
 exclude example/

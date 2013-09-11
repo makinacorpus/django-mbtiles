@@ -17,6 +17,7 @@ from models import (MBTiles, MBTilesManager,
 FILE_PATH = os.path.abspath(os.path.dirname(__file__))
 FIXTURES_PATH = os.path.join(FILE_PATH, 'fixtures')
 app_settings.MBTILES_ROOT = FIXTURES_PATH
+MBTiles.objects.folder = FIXTURES_PATH
 
 
 class MBTilesManagerTest(TestCase):
@@ -116,6 +117,10 @@ class MBTilesManagerCatalogsTest(MBTilesManagerTest):
         listed = sorted([o.id for o in self.mgr.filter(catalog='pouet').all()])
         self.failUnlessEqual(['country'], listed)
 
+    def test_mbtiles_should_fail_if_mbtiles_does_not_exist(self):
+        app_settings.MBTILES_ROOT += ":/tmp/pouet"
+        MBTiles('country', catalog='pouet')
+        self.assertRaises(MBTilesNotFoundError, MBTiles, 'country', catalog='paf')
 
 
 class MBTilesModelTest(TestCase):
@@ -170,7 +175,7 @@ class MBTilesModelTest(TestCase):
 
     def test_raise_folder_not_found(self):
         app_settings.MBTILES_ROOT = "random-path-xyz"
-        self.assertRaises(MBTilesFolderError, MBTiles, ('unknown.mbtiles'))
+        self.assertRaises(MBTilesNotFoundError, MBTiles, ('unknown.mbtiles'))
 
     def test_filesize(self):
         mb = MBTiles('france-35')

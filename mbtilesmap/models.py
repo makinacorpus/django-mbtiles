@@ -70,6 +70,25 @@ class MBTilesManager(object):
         except IndexError:
             raise MBTilesNotFoundError(_("Catalog '%s' not found.") % catalog)
 
+    def fullpath(self, name, catalog=None):
+        if os.path.exists(name):
+            return name
+
+        if catalog is None:
+            basepath = self.folder
+        else:
+            basepath = self.catalog_path(catalog)
+
+        mbtiles_file = os.path.join(basepath, name)
+        if os.path.exists(mbtiles_file):
+            return mbtiles_file
+
+        mbtiles_file = "%s.%s" % (mbtiles_file, app_settings.MBTILES_EXT)
+        if os.path.exists(mbtiles_file):
+            return mbtiles_file
+
+        raise MBTilesNotFoundError(_("'%s' not found in %s") % (mbtiles_file, self._paths))
+
 
 class MBTiles(object):
     """ Represent a MBTiles file """
@@ -77,21 +96,7 @@ class MBTiles(object):
     objects = MBTilesManager()
 
     def __init__(self, name, catalog=None):
-        """
-        Load a MBTile file.
-        If `name` is a valid filepath, it will load it. 
-        Else, it will attempt to load it within `settings.MBTILES_ROOT` folder.
-        """
-        mbtiles_file = name
-        if not os.path.exists(mbtiles_file):
-            if not os.path.exists(app_settings.MBTILES_ROOT):
-                raise MBTilesFolderError()
-            mbtiles_file = os.path.join(app_settings.MBTILES_ROOT, name)
-            if not os.path.exists(mbtiles_file):
-                mbtiles_file = "%s.%s" % (mbtiles_file, app_settings.MBTILES_EXT)
-                if not os.path.exists(mbtiles_file):
-                    raise MBTilesNotFoundError(_("'%s' not found") % mbtiles_file)
-        self.fullpath = mbtiles_file
+        self.fullpath = self.objects.fullpath(name, catalog)
         self.basename = os.path.basename(self.fullpath)
         self._reader = MBTilesReader(self.fullpath, tilesize=app_settings.TILE_SIZE)
 

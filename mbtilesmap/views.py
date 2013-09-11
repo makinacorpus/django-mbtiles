@@ -2,7 +2,6 @@ import logging
 
 from django.http import Http404, HttpResponse
 from django.utils.translation import ugettext as _
-from django.views.decorators.cache import cache_page
 
 from . import app_settings
 from models import MBTiles, MissingTileError, MBTilesNotFoundError
@@ -11,7 +10,6 @@ from models import MBTiles, MissingTileError, MBTilesNotFoundError
 logger = logging.getLogger(__name__)
 
 
-#TODO: cache
 def tile(request, name, z, x, y):
     """ Serve a single image tile """
     try:
@@ -29,7 +27,6 @@ def tile(request, name, z, x, y):
     raise Http404
 
 
-#TODO: cache
 def preview(request, name):
     try:
         mbtiles = MBTiles(name)
@@ -40,7 +37,6 @@ def preview(request, name):
     raise Http404
 
 
-@cache_page(app_settings.CACHE_TIMEOUT)
 def grid(request, name, z, x, y):
     """ Serve a single UTF-Grid tile """
     callback = request.GET.get('callback', None)
@@ -57,7 +53,6 @@ def grid(request, name, z, x, y):
     raise Http404
 
 
-@cache_page(app_settings.CACHE_TIMEOUT)
 def tilejson(request, name):
     """ Serve the map configuration as JSONP """
     callback = request.GET.get('callback', 'grid')

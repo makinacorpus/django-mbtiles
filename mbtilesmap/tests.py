@@ -248,6 +248,10 @@ class MBTilesContentViewsTest(TestCase):
         self.assertRaises(NoReverseMatch, reverse, ('mbtilesmap:tile'), kwargs=dict(name='geography-class', z='{z}', x='{y}', y='{x}'))
         self.assertRaises(NoReverseMatch, reverse, ('mbtilesmap:tile'), kwargs=dict(name='geography-class', z='z', x='y', y='x'))
 
+    def test_url_patterns_with_catalog(self):
+        self.failUnlessEqual('/fixtures/geography-class/2/2/1.png', reverse('mbtilesmap:tile', kwargs=dict(catalog='fixtures', name='geography-class', z='2', x='2', y='1')))
+        self.failUnlessEqual('/fixtures/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png', reverse('mbtilesmap:tile', kwargs=dict(catalog='fixtures', name='geography-class', z='{z}', x='{x}', y='{y}')))
+
     def test_patterns_filenames_match(self):
         p = re.compile('^%s$' % MBTILES_ID_PATTERN)
         self.failUnless(p.match('file.subname'))

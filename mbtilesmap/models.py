@@ -50,6 +50,10 @@ class MBTilesManager(object):
                 except (AssertionError, InvalidFormatError), e:
                     logger.error(e)
 
+    def default_catalog(self):
+        path = app_settings.MBTILES_ROOT.split(':')[0]
+        return os.path.basename(path)
+
     def catalog_path(self, catalog):
         try:
             paths = app_settings.MBTILES_ROOT.split(':')

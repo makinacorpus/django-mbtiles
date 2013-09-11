@@ -62,10 +62,7 @@ class MBTilesManagerTest(TestCase):
         self.assertRaises(MBTilesFolderError, MBTilesManager)
 
 
-class MBTilesManagerCatalogsTest(TestCase):
-
-    def setUp(self):
-        self.mgr = MBTilesManager()
+class MBTilesManagerCatalogsTest(MBTilesManagerTest):
 
     def test_transparent_if_catalog_is_default(self):
         fullpath = self.mgr.catalog_path('fixtures')
@@ -73,6 +70,15 @@ class MBTilesManagerCatalogsTest(TestCase):
 
     def test_error_if_catalog_is_unknown(self):
         self.assertRaises(MBTilesNotFoundError, self.mgr.catalog_path, ('pouet'))
+
+    def test_default_catalog_is_first_in_list(self):
+        app_settings.MBTILES_ROOT += ":/tmp/pouet"
+        default = self.mgr.default_catalog()
+        self.assertEqual(default, 'fixtures')
+
+        app_settings.MBTILES_ROOT = "/tmp/pouet:" + app_settings.MBTILES_ROOT
+        default = self.mgr.default_catalog()
+        self.assertEqual(default, 'pouet')
 
 
 class MBTilesModelTest(TestCase):

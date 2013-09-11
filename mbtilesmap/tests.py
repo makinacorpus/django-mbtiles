@@ -21,62 +21,73 @@ app_settings.MBTILES_ROOT = FIXTURES_PATH
 
 class MBTilesManagerTest(TestCase):
 
-    def test_list(self):
-        # Use fixtures folder
-        mgr = MBTilesManager()
-        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
+    def setUp(self):
+        self.root_orig = app_settings.MBTILES_ROOT
+        self.mgr = MBTilesManager()
+
+    def tearDown(self):
+        app_settings.MBTILES_ROOT = self.root_orig
+
+    def test_files_in_folder(self):
+        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in self.mgr.all()]))
         # Can be called twice with same result
-        qs = mgr.all()
+        qs = self.mgr.all()
         self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in qs]))
         self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in qs]))
-        # And is refreshed
+
+    def test_files_list_is_dynamic(self):
         extrafile = os.path.join(FIXTURES_PATH, 'file.mbtiles')
         shutil.copyfile(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), extrafile)
-        self.failUnlessEqual(['file', 'france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
+        self.failUnlessEqual(['file', 'france-35', 'geography-class'], sorted([o.id for o in self.mgr.all()]))
         os.remove(extrafile)
-        # File with different extensions are ignored
+
+    def test_unsupported_extensions_are_ignored(self):
         extrafile = os.path.join(FIXTURES_PATH, 'file.wrong')
         shutil.copyfile(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), extrafile)
-        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in mgr.all()]))
+        self.failUnlessEqual(['france-35', 'geography-class'], sorted([o.id for o in self.mgr.all()]))
         # Except if we change the setting extension
         app_settings.MBTILES_EXT = 'wrong'
-        self.failUnlessEqual(['file'], [o.id for o in mgr.all()])
+        self.failUnlessEqual(['file'], [o.id for o in self.mgr.all()])
         os.remove(extrafile)
         app_settings.MBTILES_EXT = 'mbtiles'
+
+    def test_no_error_if_folder_is_empty(self):
         # Try a folder without mbtiles
-        before = app_settings.MBTILES_ROOT
         app_settings.MBTILES_ROOT = '.'
-        mgr = MBTilesManager()
-        self.failIfEqual(['france-35'], [o.id for o in mgr.all()])
-        app_settings.MBTILES_ROOT = before
-        # Try with a bad (=empty) mbtiles file
-        extrafile = os.path.join(FIXTURES_PATH, 'file.png')
-        self.failIfEqual(['file'], [o.id for o in mgr.all()])
-        open(extrafile, 'w').close()
-        os.remove(extrafile)
-        # Try a unexisting folder
-        before = app_settings.MBTILES_ROOT
+        self.mgr = MBTilesManager()
+        self.failIfEqual(['france-35'], [o.id for o in self.mgr.all()])
+
+    def test_error_if_folder_is_missing(self):
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTilesManager)
-        app_settings.MBTILES_ROOT = before
 
 
 class MBTilesModelTest(TestCase):
 
-    def test_bounds(self):
+    def setUp(self):
+        self.root_orig = app_settings.MBTILES_ROOT
+
+    def tearDown(self):
+        app_settings.MBTILES_ROOT = self.root_orig
+
+    def test_bounds_are_world_if_no_metadata(self):
         mb = MBTiles('france-35')
         # MBTiles has no metadata, bounds will be (-180, -90, 180, 90)
         self.failUnlessEqual((-180, -90, 180, 90), mb.bounds)
+
+    def test_bounds_come_from_metadata(self):
         mb = MBTiles('geography-class')
         self.failUnlessEqual((-18.6328, 32.25, 29.8828, 60.2398), mb.bounds)
 
-    def test_center(self):
+    def test_center_is_0_0_if_no_metadata(self):
         mb = MBTiles('france-35')
         # Only one zoom level
-        self.failUnlessEqual([3,5], mb.zoomlevels)
+        self.failUnlessEqual([3, 5], mb.zoomlevels)
         c = mb.center
         # MBTiles has no metadata, center will be (0, 0)
         self.failUnlessEqual((0, 0, 5), tuple(c))
+
+    def test_center_come_from_metadata(self):
         mb = MBTiles('geography-class')
         # Center is in metadata 
         self.failUnlessEqual('2.3401,48.8503,7', mb.metadata.get('center'))
@@ -86,7 +97,7 @@ class MBTilesModelTest(TestCase):
         self.failUnlessEqual(3, mb.middlezoom)
         self.failUnlessEqual((2.3401, 48.8503, 3), mb.center)
 
-    def test_id(self):
+    def test_id_is_filename(self):
         # full path
         mb = MBTiles(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'))
         self.failUnlessEqual('france-35', mb.id)
@@ -96,25 +107,29 @@ class MBTilesModelTest(TestCase):
         # with default extension
         mb = MBTiles('france-35')
         self.failUnlessEqual('france-35', mb.id)
+
+    def test_raise_mbtiles_not_found(self):
         # Unknown file
         self.assertRaises(MBTilesNotFoundError, MBTiles, ('unknown.mbtiles'))
-        before = app_settings.MBTILES_ROOT
+
+    def test_raise_folder_not_found(self):
         app_settings.MBTILES_ROOT = "random-path-xyz"
         self.assertRaises(MBTilesFolderError, MBTiles, ('unknown.mbtiles'))
-        app_settings.MBTILES_ROOT = before
-
-    def test_name(self):
-        # Name in metadata
-        mb = MBTiles('geography-class')
-        self.failUnlessEqual('geography-class', mb.id)
-        self.failUnlessEqual(u'Geography Class', mb.name)
-        # No name in metadata
-        mb = MBTiles('france-35')
-        self.failUnlessEqual(mb.name, mb.id)
 
     def test_filesize(self):
         mb = MBTiles('france-35')
         self.failUnlessEqual(117760, mb.filesize)
+
+    def test_name_come_from_metadata(self):
+        # Name in metadata
+        mb = MBTiles('geography-class')
+        self.failUnlessEqual('geography-class', mb.id)
+        self.failUnlessEqual(u'Geography Class', mb.name)
+
+    def test_name_is_filename_if_no_metadata(self):
+        # No name in metadata
+        mb = MBTiles('france-35')
+        self.failUnlessEqual(mb.name, mb.id)
 
 
 class MBTilesContentTest(TestCase):

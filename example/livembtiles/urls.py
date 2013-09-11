@@ -1,22 +1,12 @@
-from django.conf.urls.defaults import patterns, include, url
-from django.views.generic import ListView, TemplateView
+from django.conf.urls import patterns, include, url
 
-from mbtilesmap.models import MBTiles
-from mbtilesmap import MBTILES_ID_PATTERN
+from mbtilesmap import MBTILES_CATALOG_PATTERN, MBTILES_ID_PATTERN
+from .views import index, catalog, preview
 
-
-class MyTemplateView(TemplateView):
-    def get_context_data(self, **kwargs):
-        return self.kwargs
 
 urlpatterns = patterns('',
-    url(r'^$', 
-        ListView.as_view(queryset=MBTiles.objects.all(),
-                         context_object_name='maps',
-                         template_name='index.html'),
-        name="index"),
-    url(r'^(?P<name>%s)/$' % MBTILES_ID_PATTERN, 
-        MyTemplateView.as_view(template_name='map.html'),
-        name="map"),
+    url(r'^$', index, name="index"),
+    url(r'^(?P<catalog>%s)/$' % MBTILES_CATALOG_PATTERN, catalog, name="catalog"),
+    url(r'^(?P<catalog>%s)/(?P<name>%s)/$' % (MBTILES_CATALOG_PATTERN, MBTILES_ID_PATTERN), preview, name="preview"),
     url(r'^', include('mbtilesmap.urls', namespace='mb', app_name='mbtilesmap')),
 )

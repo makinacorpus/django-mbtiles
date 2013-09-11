@@ -56,7 +56,7 @@ class MBTiles(object):
 
     objects = MBTilesManager()
 
-    def __init__(self, name):
+    def __init__(self, name, catalog=None):
         """
         Load a MBTile file.
         If `name` is a valid filepath, it will load it. 

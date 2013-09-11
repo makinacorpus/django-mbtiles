@@ -5,6 +5,8 @@ from easydict import EasyDict
 
 
 MBTILES_ID_PATTERN = r'[\.\-_0-9a-zA-Z]+'
+MBTILES_CATALOG_PATTERN = MBTILES_ID_PATTERN
+
 
 app_settings = EasyDict(dict(
     MBTILES_EXT = 'mbtiles',

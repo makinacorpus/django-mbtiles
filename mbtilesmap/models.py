@@ -33,7 +33,12 @@ class MBTilesManager(object):
         for path in self._paths:
             if not os.path.exists(path):
                 raise MBTilesFolderError()
-        self.folder = app_settings.MBTILES_ROOT
+        self.folder = self._paths[0]
+
+    def filter(self, catalog=None):
+        if catalog:
+            self.folder = self.catalog_path(catalog)
+        return self
 
     def all(self):
         return self

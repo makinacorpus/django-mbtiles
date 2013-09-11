@@ -68,13 +68,14 @@ class MBTilesManagerCatalogsTest(MBTilesManagerTest):
         super(MBTilesManagerCatalogsTest, self).setUp()
         try:
             os.mkdir('/tmp/pouet')
+            shutil.copy(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), '/tmp/pouet/country.mbtiles')
         except OSError:
             pass
 
     def tearDown(self):
         super(MBTilesManagerCatalogsTest, self).tearDown()
         try:
-            os.remove('/tmp/pouet')
+            shutil.rmtree('/tmp/pouet')
         except OSError:
             pass
 
@@ -101,6 +102,20 @@ class MBTilesManagerCatalogsTest(MBTilesManagerTest):
     def test_manager_should_fail_if_folder_does_not_exist(self):
         app_settings.MBTILES_ROOT = "/tmp/paf:" + app_settings.MBTILES_ROOT
         self.assertRaises(MBTilesFolderError, MBTilesManager)
+
+    def test_manager_should_fail_if_catalog_does_not_exist(self):
+        self.assertRaises(MBTilesNotFoundError, self.mgr.filter, catalog='paf')
+
+    def test_manager_should_restrict_list_to_catalog(self):
+        app_settings.MBTILES_ROOT += ":/tmp/pouet"
+
+        self.mgr = MBTilesManager()
+        listed = sorted([o.id for o in self.mgr.all()])
+        self.failUnlessEqual(['france-35', 'geography-class'], listed)
+
+        listed = sorted([o.id for o in self.mgr.filter(catalog='pouet').all()])
+        self.failUnlessEqual(['country'], listed)
+
 
 
 class MBTilesModelTest(TestCase):

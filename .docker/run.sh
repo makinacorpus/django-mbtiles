@@ -8,7 +8,7 @@ APP_ROOT=/opt/apps/livembtiles
 BRANCH=livembtiles
 WSGI=livembtiles.wsgi
 
-
+service nginx restart
 
 cd $APP_ROOT
 git pull origin $BRANCH

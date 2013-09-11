@@ -1,2 +1,0 @@
-easydict >= 1.3
-landez == 2.1.1

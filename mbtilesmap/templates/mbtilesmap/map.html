@@ -1,7 +1,7 @@
 <div id="map-{{map.id}}" class="map"></div>
 <script>
 var mm = com.modestmaps;
-var url = '{% url "mbtilesmap:tilejson" name=map.id %}';
+var url = '{% if catalog %}{% url "mbtilesmap:tilejson" catalog=catalog name=map.id %}{% else %}{% url "mbtilesmap:tilejson" name=map.id %}{% endif %}';
 
 wax.tilejson(url, function(tilejson) {
   var m = new mm.Map('map-{{map.id}}',

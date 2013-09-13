@@ -7,6 +7,8 @@ from mbtilesmap.models import MBTiles, MBTilesNotFoundError
 
 def index(request):
     catalog = MBTiles.objects.default_catalog()
+    if catalog is None:
+        return CatalogView.as_view()(request)
     return redirect('catalog', catalog=catalog)
 
 
@@ -17,12 +19,12 @@ class CatalogView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         context = super(CatalogView, self).get_context_data(*args, **kwargs)
-        context['catalog'] = self.kwargs['catalog']
+        context['catalog'] = self.kwargs.get('catalog')
         return context
 
     def get_queryset(self):
         try:
-            catalog = self.kwargs['catalog']
+            catalog = self.kwargs.get('catalog')
             qs = super(CatalogView, self).get_queryset()
             return qs.filter(catalog=catalog)
         except MBTilesNotFoundError:

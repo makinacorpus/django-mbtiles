@@ -4,8 +4,8 @@
 {% block body %}
     {% for map in maps %}
         <div class="map-preview">
-            <a href="{% url "preview" catalog map.id %}">
-                <img src="{% url "mbtilesmap:preview" catalog map.id %}"/>
+            <a href="{% if catalog %}{% url "map" catalog map.id %}{% else %}{% url "map" map.id %}{% endif %}">
+                <img src="{% if catalog %}{% url "mbtilesmap:preview" catalog map.id %}{% else %}{% url "mbtilesmap:preview" map.id %}{% endif %}"/>
                 <span class="map-title">{{ map.name }}</span>
             </a>
         </div>

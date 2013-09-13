@@ -68,48 +68,49 @@ class MBTilesManagerCatalogsTest(MBTilesManagerTest):
     def setUp(self):
         super(MBTilesManagerCatalogsTest, self).setUp()
         try:
-            os.mkdir('/tmp/pouet')
-            shutil.copy(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), '/tmp/pouet/country.mbtiles')
+            os.mkdir(os.path.join(FIXTURES_PATH, 'pouet'))
+            shutil.copy(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), os.path.join(FIXTURES_PATH, 'pouet', 'country.mbtiles'))
         except OSError:
             pass
 
     def tearDown(self):
         super(MBTilesManagerCatalogsTest, self).tearDown()
         try:
-            shutil.rmtree('/tmp/pouet')
+            shutil.rmtree(os.path.join(FIXTURES_PATH, 'pouet'))
         except OSError:
             pass
 
     def test_transparent_if_catalog_is_default(self):
-        fullpath = self.mgr.catalog_path('fixtures')
+        fullpath = self.mgr.catalog_path()
         self.assertEqual(fullpath, app_settings.MBTILES_ROOT)
 
     def test_error_if_catalog_is_unknown(self):
-        self.assertRaises(MBTilesNotFoundError, self.mgr.catalog_path, ('pouet'))
+        self.assertRaises(MBTilesNotFoundError, self.mgr.catalog_path, ('paf'))
 
-    def test_default_catalog_is_first_in_list(self):
-        app_settings.MBTILES_ROOT += ":/tmp/pouet"
+    def test_default_catalog_is_root_if_files_present(self):
         default = self.mgr.default_catalog()
-        self.assertEqual(default, 'fixtures')
+        self.assertEqual(default, None)
 
-        app_settings.MBTILES_ROOT = "/tmp/pouet:" + app_settings.MBTILES_ROOT
-        default = self.mgr.default_catalog()
-        self.assertEqual(default, 'pouet')
-
-    def test_manager_should_support_multiple_folders(self):
-        app_settings.MBTILES_ROOT = "/tmp/pouet:" + app_settings.MBTILES_ROOT
-        MBTilesManager()
+    def test_default_catalog_is_first_folder_if_no_files(self):
+        # Move all files to other
+        shutil.move(os.path.join(FIXTURES_PATH, 'france-35.mbtiles'), '/tmp/france-35.mbtiles')
+        shutil.move(os.path.join(FIXTURES_PATH, 'geography-class.mbtiles'), '/tmp/geography-class.mbtiles')
+        try:
+            default = self.mgr.default_catalog()
+            self.assertEqual(default, 'pouet')
+        finally:
+            # Move back
+            shutil.move('/tmp/france-35.mbtiles', os.path.join(FIXTURES_PATH, 'france-35.mbtiles'))
+            shutil.move('/tmp/geography-class.mbtiles', os.path.join(FIXTURES_PATH, 'geography-class.mbtiles'))
 
     def test_manager_should_fail_if_folder_does_not_exist(self):
-        app_settings.MBTILES_ROOT = "/tmp/paf:" + app_settings.MBTILES_ROOT
+        app_settings.MBTILES_ROOT = "/tmp/paf"
         self.assertRaises(MBTilesFolderError, MBTilesManager)
 
     def test_manager_should_fail_if_catalog_does_not_exist(self):
         self.assertRaises(MBTilesNotFoundError, self.mgr.filter, catalog='paf')
 
     def test_manager_should_restrict_list_to_catalog(self):
-        app_settings.MBTILES_ROOT += ":/tmp/pouet"
-
         self.mgr = MBTilesManager()
         listed = sorted([o.id for o in self.mgr.all()])
         self.failUnlessEqual(['france-35', 'geography-class'], listed)
@@ -118,7 +119,6 @@ class MBTilesManagerCatalogsTest(MBTilesManagerTest):
         self.failUnlessEqual(['country'], listed)
 
     def test_mbtiles_should_fail_if_mbtiles_does_not_exist(self):
-        app_settings.MBTILES_ROOT += ":/tmp/pouet"
         MBTiles('country', catalog='pouet')
         self.assertRaises(MBTilesNotFoundError, MBTiles, 'country', catalog='paf')
 

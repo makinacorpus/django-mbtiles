@@ -2,9 +2,10 @@
 import os
 import logging
 import json
+import glob
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, NoReverseMatch
 from django.utils.translation import ugettext as _
 from landez.sources import MBTilesReader, ExtractionError, InvalidFormatError
 from landez.proj import GoogleProjection
@@ -30,10 +31,9 @@ class MBTilesFolderError(ImproperlyConfigured):
 class MBTilesManager(object):
     """ List available MBTiles in MBTILES_ROOT """
     def __init__(self, *args, **kwargs):
-        for path in self._paths:
-            if not os.path.exists(path):
-                raise MBTilesFolderError()
-        self.folder = self._paths[0]
+        if not os.path.exists(app_settings.MBTILES_ROOT):
+            raise MBTilesFolderError()
+        self.folder = app_settings.MBTILES_ROOT
 
     def filter(self, catalog=None):
         if catalog:
@@ -44,31 +44,34 @@ class MBTilesManager(object):
         return self
 
     def __iter__(self):
-        for dirname, dirnames, filenames in os.walk(self.folder):
-            for filename in filenames:
-                name, ext = os.path.splitext(filename)
-                if ext != '.%s' % app_settings.MBTILES_EXT:
-                    continue
-                try:
-                    mb = MBTiles(os.path.join(dirname, filename))
-                    assert mb.name, _("%s name is empty !") % mb.id
-                    yield mb
-                except (AssertionError, InvalidFormatError), e:
-                    logger.error(e)
+        filepattern = os.path.join(self.folder, '*.%s' % app_settings.MBTILES_EXT)
+        for filename in glob.glob(filepattern):
+            name, ext = os.path.splitext(filename)
+            try:
+                mb = MBTiles(os.path.join(self.folder, filename))
+                assert mb.name, _("%s name is empty !") % mb.id
+                yield mb
+            except (AssertionError, InvalidFormatError), e:
+                logger.error(e)
 
     @property
-    def _paths(self):
-        return app_settings.MBTILES_ROOT.split(':')
+    def _subfolders(self):
+        for dirname, dirnames, filenames in os.walk(app_settings.MBTILES_ROOT):
+            return dirnames
+        return []
 
     def default_catalog(self):
-        path = self._paths[0]
-        return os.path.basename(path)
+        if len(list(self)) == 0:
+            return self._subfolders[0]
+        return None
 
-    def catalog_path(self, catalog):
-        try:
-            return [p for p in self._paths if p.endswith(catalog)][0]
-        except IndexError:
-            raise MBTilesNotFoundError(_("Catalog '%s' not found.") % catalog)
+    def catalog_path(self, catalog=None):
+        if catalog is None:
+            return app_settings.MBTILES_ROOT
+        path = os.path.join(app_settings.MBTILES_ROOT, catalog)
+        if os.path.exists(path):
+            return path
+        raise MBTilesNotFoundError(_("Catalog '%s' not found.") % catalog)
 
     def fullpath(self, name, catalog=None):
         if os.path.exists(name):
@@ -87,7 +90,7 @@ class MBTilesManager(object):
         if os.path.exists(mbtiles_file):
             return mbtiles_file
 
-        raise MBTilesNotFoundError(_("'%s' not found in %s") % (mbtiles_file, self._paths))
+        raise MBTilesNotFoundError(_("'%s' not found in %s") % (mbtiles_file, basepath))
 
 
 class MBTiles(object):
@@ -96,6 +99,7 @@ class MBTiles(object):
     objects = MBTilesManager()
 
     def __init__(self, name, catalog=None):
+        self.catalog = catalog
         self.fullpath = self.objects.fullpath(name, catalog)
         self.basename = os.path.basename(self.fullpath)
         self._reader = MBTilesReader(self.fullpath, tilesize=app_settings.TILE_SIZE)
@@ -189,7 +193,14 @@ class MBTiles(object):
             "maxzoom": self.maxzoom,
         })
         # Additionnal info
-        tilepattern = reverse("mbtilesmap:tile", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
+        try:
+            kwargs = dict(name=self.id, x='{x}',y='{y}',z='{z}')
+            if self.catalog:
+                kwargs['catalog'] = self.catalog
+            tilepattern = reverse("mbtilesmap:tile", kwargs=kwargs)
+        except NoReverseMatch:
+            # In case django-mbtiles was not registered in namespace mbtilesmap
+            tilepattern = reverse("tile", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
         tilepattern = request.build_absolute_uri(tilepattern)
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
         jsonp.update(**{

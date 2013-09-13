@@ -53,13 +53,11 @@ USAGE
     {% mbtilesmap filename %}
 
 
-MBTiles files can be loaded with relative paths, based on ``MBTILES_ROOT`` setting.
+MBTiles files can be loaded from subfolders with ``MBTILES_ROOT`` setting.
 
 ::
 
-   MBTILES_APP_CONFIG = {
-       'MBTILES_ROOT': '/data/files:/home/maps'
-   }
+    {% mbtilesmap filename catalog="subfolder" %}
 
 
 Example
@@ -122,6 +120,11 @@ LICENSE
 =========
 CHANGELOG
 =========
+
+1.2 (unreleased)
+----------------
+
+* Changed behaviour, looks for subfolders instead of multiple paths in MBTILES_ROOT
 
 1.1 (2013-09-11)
 ----------------

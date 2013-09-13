@@ -121,7 +121,7 @@ LICENSE
 CHANGELOG
 =========
 
-1.2 (unreleased)
+1.2 (2013-09-13)
 ----------------
 
 * Changed behaviour, looks for subfolders instead of multiple paths in MBTILES_ROOT

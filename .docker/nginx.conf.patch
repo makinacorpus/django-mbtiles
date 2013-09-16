@@ -1,0 +1,12 @@
+--- /etc/nginx/nginx.conf	2013-09-13 16:24:02.432914612 +0200
++++ /etc/nginx/nginx.conf	2013-09-13 16:23:54.936846152 +0200
+@@ -64,6 +64,9 @@
+	#passenger_root /usr;
+	#passenger_ruby /usr/bin/ruby;
+ 
++	proxy_cache_path  /var/cache/nginx levels=1:2 keys_zone=master:10m inactive=7d max_size=1g;
++	proxy_temp_path   /var/tmp/nginx;
++
+	##
+	# Virtual Host Configs
+	##

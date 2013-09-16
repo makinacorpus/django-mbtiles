@@ -1,13 +1,22 @@
 FROM makinacorpus/pythonbox
 MAINTAINER Mathieu Leplatre "mathieu.leplatre@makina-corpus.com"
 
-RUN apt-get install -y git nginx
+RUN apt-get install -y nginx
 
 ADD . /opt/apps/livembtiles
 RUN mkdir -p /opt/apps/livembtiles/static
 
 RUN mkdir -p /data/makinacorpus
 ENV MBTILES_ROOT /data/makinacorpus
+
+#
+# Nginx host and cache config
+#...
+RUN mkdir -p /var/tmp/nginx
+RUN mkdir -p /var/cache/nginx
+ADD .docker/nginx.conf.patch /tmp/nginx.conf.patch
+RUN patch --unified /etc/nginx/nginx.conf < /tmp/nginx.conf.patch
+ADD .docker/livembtiles.conf /etc/nginx/sites-available/default
 
 RUN (cd /opt/apps/livembtiles && git remote rm origin)
 RUN (cd /opt/apps/livembtiles && git remote add origin https://github.com/makinacorpus/django-mbtiles.git)

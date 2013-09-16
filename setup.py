@@ -5,7 +5,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 setup(
     name='django-mbtiles',
-    version='1.3.dev0',
+    version='1.2.1',
     author='Mathieu Leplatre',
     author_email='mathieu.leplatre@makina-corpus.com',
     url='https://github.com/makinacorpus/django-mbtiles',
@@ -14,6 +14,8 @@ setup(
     long_description=open(os.path.join(here, 'README.rst')).read(),
     install_requires = open(os.path.join(here, 'requirements.txt')).readlines(),
     packages=find_packages(),
+    include_package_data = True,
+    zip_safe = False,
     classifiers  = ['Topic :: Utilities', 
                     'Natural Language :: English',
                     'Operating System :: OS Independent',

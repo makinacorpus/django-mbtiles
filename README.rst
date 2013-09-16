@@ -61,14 +61,14 @@ MBTiles files can be loaded from subfolders with ``MBTILES_ROOT`` setting.
 
 
 Example
-=======
+-------
 
 You can find a working demo project (MBTiles maps browser *livembtiles*) 
 in the ``example/`` folder of the source tree (see dedicated ``README.rst`` file).
 
 
 Cache with nginx
-================
+----------------
 
 * Declare a cache zone in the ``http`` section :
 

@@ -1,5 +1,7 @@
-*django-mbtiles* serve maps from MBTiles files using Django. 
+*django-mbtiles* serves maps from MBTiles files using Django. 
 It mainly relies on `landez <https://github.com/makinacorpus/landez/>`_.
+
+Checkout `LiveMbtiles <https://github.com/makinacorpus/django-mbtiles/tree/livembtiles>`_ a simple maps catalog project that takes advantage of django-mbtiles.
 
 =======
 INSTALL

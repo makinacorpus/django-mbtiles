@@ -21,4 +21,5 @@ bin/uwsgi \
     --master \
     --max-requests 5000 \
     --virtualenv $APP_ROOT \
+    --static-map /static=/opt/apps/livembtiles/static \
     --module $WSGI

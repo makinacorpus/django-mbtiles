@@ -5,7 +5,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 setup(
     name='django-mbtiles',
-    version='1.2.1',
+    version='1.3',
     author='Mathieu Leplatre',
     author_email='mathieu.leplatre@makina-corpus.com',
     url='https://github.com/makinacorpus/django-mbtiles',

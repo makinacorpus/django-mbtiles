@@ -102,6 +102,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 )
 
 ROOT_URLCONF = 'livembtiles.urls'
@@ -117,6 +118,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     # Main app
     'mbtilesmap',
 )
@@ -154,3 +156,5 @@ LOGGING = {
         }
     }
 }
+
+CORS_ORIGIN_ALLOW_ALL = True

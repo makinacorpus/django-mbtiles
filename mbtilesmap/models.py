@@ -198,17 +198,23 @@ class MBTiles(object):
             if self.catalog:
                 kwargs['catalog'] = self.catalog
             tilepattern = reverse("mbtilesmap:tile", kwargs=kwargs)
+            gridpattern = reverse("mbtilesmap:grid", kwargs=kwargs)
         except NoReverseMatch:
             # In case django-mbtiles was not registered in namespace mbtilesmap
             tilepattern = reverse("tile", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
+            gridpattern = reverse("grid", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
         tilepattern = request.build_absolute_uri(tilepattern)
+        gridpattern = request.build_absolute_uri(gridpattern)
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
+        gridpattern = gridpattern.replace('%7B', '{').replace('%7D', '}')
         jsonp.update(**{
+            "tilejson": "2.0.1",
             "id": self.id,
             "name": self.name,
             "scheme": "xyz",
             "basename": self.basename,
             "filesize": self.filesize,
             "tiles": [tilepattern],
+            "grids": [gridpattern]
         })
         return json.dumps(jsonp)

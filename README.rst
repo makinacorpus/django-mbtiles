@@ -123,6 +123,11 @@ LICENSE
 CHANGELOG
 =========
 
+1.3.0 (unreleased)
+------------------
+
+* Add grids urls in TileJSON
+
 1.2.1 (2013-09-16)
 ------------------
 

@@ -182,7 +182,7 @@ class MBTiles(object):
         except ExtractionError:
             raise MissingTileError
 
-    def jsonp(self, request, callback):
+    def tilejson(self, request):
         # Raw metadata
         jsonp = dict(self.metadata)
         # Post-processed metadata
@@ -211,4 +211,4 @@ class MBTiles(object):
             "filesize": self.filesize,
             "tiles": [tilepattern],
         })
-        return '%s(%s);' % (callback, json.dumps(jsonp))
+        return json.dumps(jsonp)

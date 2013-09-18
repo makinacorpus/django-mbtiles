@@ -54,14 +54,15 @@ def grid(request, name, z, x, y, catalog=None):
 
 
 def tilejson(request, name, catalog=None):
-    """ Serve the map configuration as JSONP """
-    callback = request.GET.get('callback', 'grid')
+    """ Serve the map configuration as TileJSON """
+    callback = request.GET.get('callback', None)
     try:
         mbtiles = MBTiles(name, catalog)
-        return HttpResponse(
-            mbtiles.jsonp(request, callback),
-            content_type = 'application/javascript; charset=utf8'
-        )
+        tilejson = mbtiles.tilejson(request)
+        if callback:
+            tilejson = '%s(%s);' % (callback, tilejson)
+        return HttpResponse(tilejson,
+                            content_type='application/javascript; charset=utf8')
     except MBTilesNotFoundError, e:
         logger.warning(e)
     raise Http404

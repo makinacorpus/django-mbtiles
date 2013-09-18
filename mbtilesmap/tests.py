@@ -2,6 +2,7 @@ import os
 import re
 import hashlib
 import shutil
+import json
 
 from django.utils import simplejson
 from django.test import TestCase
@@ -195,13 +196,10 @@ class MBTilesModelTest(TestCase):
 
 class MBTilesContentTest(TestCase):
 
-    def test_jsonp(self):
+    def test_tilejson(self):
         request = RequestFactory().get('/')
         mb = MBTiles('geography-class')
-        js = mb.jsonp(request, 'cb')
-        p = re.compile("cb\((.+)\);")
-        self.failUnless(p.match(js))
-        jsonp = p.match(js).group(1)
+        jsonp = mb.tilejson(request)
         jsonp = edict(simplejson.loads(jsonp))
         self.failUnlessEqual('geography-class', mb.id)
         self.failUnlessEqual(mb.id, jsonp.id)
@@ -298,6 +296,18 @@ class MBTilesContentViewsTest(TestCase):
         response = self.client.get(reverse('tilejson', kwargs=dict(name='geography-class')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
+        tilejson = json.loads(response.content)
+        self.assertEqual(tilejson['tiles'][0], 'http://testserver/geography-class/{z}/{x}/{y}.png')
+
+    def test_should_serve_tilejson_with_callback(self):
+        response = self.client.get(reverse('tilejson', kwargs=dict(name='geography-class')) + '?callback=cb')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
+        tilejson = response.content
+        p = re.compile("cb\((.+)\);")
+        self.failUnless(p.match(tilejson))
+        tilejson = json.loads(p.match(tilejson).group(1))
+        self.assertEqual(tilejson['tiles'][0], 'http://testserver/geography-class/{z}/{x}/{y}.png')
 
     def test_should_serve__404_if_mbtiles_tilejson_missing(self):
         response = self.client.get(reverse('tilejson', kwargs=dict(name='class-geography')))

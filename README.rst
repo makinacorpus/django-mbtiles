@@ -126,6 +126,7 @@ CHANGELOG
 1.3.0 (unreleased)
 ------------------
 
+* Safety check if root folder is empty, with no sub-folders
 * Add grids urls in TileJSON
 
 1.2.1 (2013-09-16)

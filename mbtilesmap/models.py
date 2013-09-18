@@ -61,7 +61,7 @@ class MBTilesManager(object):
         return []
 
     def default_catalog(self):
-        if len(list(self)) == 0:
+        if len(list(self)) == 0 and len(self._subfolders) > 0:
             return self._subfolders[0]
         return None
 

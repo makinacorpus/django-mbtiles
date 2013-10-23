@@ -11,7 +11,7 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 from easydict import EasyDict as edict
 
 from . import app_settings, MBTILES_ID_PATTERN
-from models import (MBTiles, MBTilesManager, 
+from models import (MBTiles, MBTilesManager,
                     MBTilesFolderError, MBTilesNotFoundError)
 
 
@@ -151,7 +151,7 @@ class MBTilesModelTest(TestCase):
 
     def test_center_come_from_metadata(self):
         mb = MBTiles('geography-class')
-        # Center is in metadata 
+        # Center is in metadata
         self.failUnlessEqual('2.3401,48.8503,7', mb.metadata.get('center'))
         # But zoomlevel is not among available
         self.failUnless(7 not in mb.zoomlevels)
@@ -192,6 +192,16 @@ class MBTilesModelTest(TestCase):
         # No name in metadata
         mb = MBTiles('france-35')
         self.failUnlessEqual(mb.name, mb.id)
+
+    def test_mimetype_comes_from_metadata(self):
+        mb = MBTiles('france-35')
+        mb.metadata['format'] = 'gif'
+        self.failUnlessEqual(mb.mimetype, 'image/gif')
+
+    def test_default_mimetype_is_png(self):
+        mb = MBTiles('france-35')
+        mb.metadata['format'] = 'pbf'
+        self.failUnlessEqual(mb.mimetype, 'image/png')
 
 
 class MBTilesContentTest(TestCase):
@@ -236,19 +246,19 @@ class MBTilesContentTest(TestCase):
         self.failUnless(p.match(tile))
         utfgrid = p.match(tile).group(1)
         utfgrid = edict(simplejson.loads(utfgrid))
-        self.failUnlessEqual(utfgrid.grid[20:30], 
-            [u'       !!!!!!!!!!!######### &  $$$$$     %%%%%%%%%%%%%%%%%%%%%%%', 
-             u'        !!!!!!!!!###########     $       %%%%%%%%%%%%%%%%%%%%%%%', 
-             u"        !!!!!!!!!######## #        '''' %%%%%%%%%%%%%%%%%%%%%%%%", 
-             u"         !!!!!! ###########     ' ''''''%%%%%%%%%%%%%%%%%%%%%%%%", 
-             u"        !!!!!!  #########       ' '''''%%%%%%%%%%%%%%%%%%%%%%%%%", 
-             u"         !!!!   ########       ''''''''%%%%%%%%%%%%%%%%%%%%%%%%%", 
-             u"          !!     #######           (('''%%%%%%%%%%%%%%%%%%%%%%%%", 
+        self.failUnlessEqual(utfgrid.grid[20:30],
+            [u'       !!!!!!!!!!!######### &  $$$$$     %%%%%%%%%%%%%%%%%%%%%%%',
+             u'        !!!!!!!!!###########     $       %%%%%%%%%%%%%%%%%%%%%%%',
+             u"        !!!!!!!!!######## #        '''' %%%%%%%%%%%%%%%%%%%%%%%%",
+             u"         !!!!!! ###########     ' ''''''%%%%%%%%%%%%%%%%%%%%%%%%",
+             u"        !!!!!!  #########       ' '''''%%%%%%%%%%%%%%%%%%%%%%%%%",
+             u"         !!!!   ########       ''''''''%%%%%%%%%%%%%%%%%%%%%%%%%",
+             u"          !!     #######           (('''%%%%%%%%%%%%%%%%%%%%%%%%",
              u"               ) #######  #     (  ((('%%%%%%%%%%%%%%%%%%%%%%%%%",
-             u'              )  ######## #    ((  (((((%%%%%%%%%%%%%%%%%%%%%%%%', 
+             u'              )  ######## #    ((  (((((%%%%%%%%%%%%%%%%%%%%%%%%',
              u'            )))   ######      ((((((((((%%%%%%%%%%%%%%%%%%%%%%%%'])
         c = ord('#') + 32
-        if c >= 92: c = c + 1 
+        if c >= 92: c = c + 1
         if c >= 34: c = c + 1
         self.failUnlessEqual(utfgrid.data[str(c)]['ADMIN'], 'Estonia')
         self.failUnlessEqual(utfgrid.data[str(c)]['POP_EST'], 1299371)
@@ -259,37 +269,41 @@ class MBTilesContentViewsTest(TestCase):
     def test_should_serve_image_if_exists(self):
         # Tiles
         response = self.client.get(reverse('tile', kwargs=dict(name='geography-class',
-                                                                          z='2', x='2', y='1')))
+                                                               z='2', x='2', y='1',
+                                                               format='png')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-type'], 'image/png')
 
     def test_should_serve_404_if_mbtiles_missing(self):
         response = self.client.get(reverse('tile', kwargs=dict(name='class-geography',
-                                                                          z='2', x='2', y='1')))
+                                                               z='2', x='2', y='1',
+                                                               format='png')))
         self.assertEqual(response.status_code, 404)
 
     def test_should_serve_empty_if_tile_missing(self):
         response = self.client.get(reverse('tile', kwargs=dict(name='geography-class',
-                                                                          x='3', y='18', z='22')))
+                                                               x='3', y='18', z='22',
+                                                               format='png')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, '')
 
     def test_should_serve_404_if_tile_missing_setting(self):
         app_settings.MISSING_TILE_404 = True
         response = self.client.get(reverse('tile', kwargs=dict(name='geography-class',
-                                                                          x='3', y='18', z='22')))
+                                                               x='3', y='18', z='22',
+                                                               format='png')))
         self.assertEqual(response.status_code, 404)
         app_settings.MISSING_TILE_404 = False
 
     def test_should_serve_grid_if_exists(self):
         response = self.client.get(reverse('grid', kwargs=dict(name='geography-class',
-                                                                          z='2', x='2', y='1')))
+                                                               z='2', x='2', y='1')))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-type'], 'application/javascript; charset=utf8')
 
     def test_should_serve_404_if_grid_missing(self):
         response = self.client.get(reverse('grid', kwargs=dict(name='geography-class',
-                                                                          x='3', y='18', z='22')))
+                                                               x='3', y='18', z='22')))
         self.assertEqual(response.status_code, 404)
 
     def test_should_serve_tilejson_if_exists(self):
@@ -309,19 +323,43 @@ class MBTilesContentViewsTest(TestCase):
         tilejson = json.loads(p.match(tilejson).group(1))
         self.assertEqual(tilejson['tiles'][0], 'http://testserver/geography-class/{z}/{x}/{y}.png')
 
-    def test_should_serve__404_if_mbtiles_tilejson_missing(self):
+    def test_should_serve_404_if_mbtiles_tilejson_missing(self):
         response = self.client.get(reverse('tilejson', kwargs=dict(name='class-geography')))
         self.assertEqual(response.status_code, 404)
 
     def test_url_patterns(self):
-        self.failUnlessEqual('/geography-class/2/2/1.png', reverse('tile', kwargs=dict(name='geography-class', z='2', x='2', y='1')))
-        self.failUnlessEqual('/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png', reverse('tile', kwargs=dict(name='geography-class', z='{z}', x='{x}', y='{y}')))
+        self.failUnlessEqual('/geography-class/2/2/1.png',
+                             reverse('tile', kwargs=dict(name='geography-class',
+                                                         z='2', x='2', y='1',
+                                                         format='png')))
+        self.failUnlessEqual('/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png',
+                             reverse('tile', kwargs=dict(name='geography-class',
+                                                         z='{z}', x='{x}', y='{y}',
+                                                         format='png')))
+        self.failUnlessEqual('/fixtures/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.pbf',
+                             reverse('tile', kwargs=dict(catalog='fixtures',
+                                                         name='geography-class',
+                                                         z='{z}', x='{x}', y='{y}',
+                                                         format='pbf')))
         self.assertRaises(NoReverseMatch, reverse, ('tile'), kwargs=dict(name='geography-class', z='{z}', x='{y}', y='{x}'))
         self.assertRaises(NoReverseMatch, reverse, ('tile'), kwargs=dict(name='geography-class', z='z', x='y', y='x'))
 
     def test_url_patterns_with_catalog(self):
-        self.failUnlessEqual('/fixtures/geography-class/2/2/1.png', reverse('tile', kwargs=dict(catalog='fixtures', name='geography-class', z='2', x='2', y='1')))
-        self.failUnlessEqual('/fixtures/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png', reverse('tile', kwargs=dict(catalog='fixtures', name='geography-class', z='{z}', x='{x}', y='{y}')))
+        self.failUnlessEqual('/fixtures/geography-class/2/2/1.png',
+                             reverse('tile', kwargs=dict(catalog='fixtures',
+                                                         name='geography-class',
+                                                         z='2', x='2', y='1',
+                                                         format='png')))
+        self.failUnlessEqual('/fixtures/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.png',
+                             reverse('tile', kwargs=dict(catalog='fixtures',
+                                                         name='geography-class',
+                                                         z='{z}', x='{x}', y='{y}',
+                                                         format='png')))
+        self.failUnlessEqual('/fixtures/geography-class/%7Bz%7D/%7Bx%7D/%7By%7D.pbf',
+                             reverse('tile', kwargs=dict(catalog='fixtures',
+                                                         name='geography-class',
+                                                         z='{z}', x='{x}', y='{y}',
+                                                         format='pbf')))
 
     def test_patterns_filenames_match(self):
         p = re.compile('^%s$' % MBTILES_ID_PATTERN)

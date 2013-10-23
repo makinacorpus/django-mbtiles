@@ -1,4 +1,4 @@
-*django-mbtiles* serves maps from MBTiles files using Django. 
+*django-mbtiles* serves maps from MBTiles files using Django.
 It mainly relies on `landez <https://github.com/makinacorpus/landez/>`_.
 
 Checkout `LiveMbtiles <https://github.com/makinacorpus/django-mbtiles/tree/livembtiles>`_ a simple maps catalog project that takes advantage of django-mbtiles.
@@ -49,7 +49,7 @@ USAGE
     {% mbtilesmap_head %}
     {{ block.super }}
     {% endblock head %}
-    
+
     ...
     ...
     {% mbtilesmap filename %}
@@ -65,7 +65,7 @@ MBTiles files can be loaded from subfolders with ``MBTILES_ROOT`` setting.
 Example
 -------
 
-You can find a working demo project (MBTiles maps browser *livembtiles*) 
+You can find a working demo project (MBTiles maps browser *livembtiles*)
 in the ``example/`` folder of the source tree (see dedicated ``README.rst`` file).
 
 
@@ -104,8 +104,8 @@ AUTHORS
 =======
 
     * Mathieu Leplatre <mathieu.leplatre@makina-corpus.com>
-    * `Andreas Trawoeger <https://github.com/atrawog>`_ 
-    
+    * `Andreas Trawoeger <https://github.com/atrawog>`_
+
 |makinacom|_
 
 .. |makinacom| image:: http://depot.makina-corpus.org/public/logo.gif
@@ -122,6 +122,11 @@ LICENSE
 =========
 CHANGELOG
 =========
+
+1.4.0 (unreleased)
+------------------
+
+* Add custom tile format support (different than png)
 
 1.3.0 (2013-09-18)
 ------------------

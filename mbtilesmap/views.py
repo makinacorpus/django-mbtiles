@@ -10,12 +10,12 @@ from models import MBTiles, MissingTileError, MBTilesNotFoundError
 logger = logging.getLogger(__name__)
 
 
-def tile(request, name, z, x, y, catalog=None):
+def tile(request, name, z, x, y, format=None, catalog=None):
     """ Serve a single image tile """
     try:
         mbtiles = MBTiles(name, catalog)
         data = mbtiles.tile(z, x, y)
-        response = HttpResponse(mimetype='image/png')
+        response = HttpResponse(mimetype=mbtiles.mimetype)
         response.write(data)
         return response
     except MBTilesNotFoundError, e:
@@ -23,7 +23,7 @@ def tile(request, name, z, x, y, catalog=None):
     except MissingTileError:
         logger.warning(_("Tile %s not available in %s") % ((z, x, y), name))
         if not app_settings.MISSING_TILE_404:
-            return HttpResponse(mimetype="image/png")
+            return HttpResponse(mimetype=mbtiles.mimetype)
     raise Http404
 
 

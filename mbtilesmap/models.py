@@ -3,6 +3,7 @@ import os
 import logging
 import json
 import glob
+import mimetypes
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse, NoReverseMatch
@@ -157,6 +158,14 @@ class MBTiles(object):
         z = self.metadata.get('maxzoom', self.zoomlevels[-1])
         return int(z)
 
+    @reify
+    def mimetype(self):
+        tileformat = self.metadata.get('format', 'png')
+        mimetype = mimetypes.guess_type('file.%s' % tileformat)[0]
+        if mimetype is None:
+            return 'image/png'
+        return mimetype
+
     @property
     def middlezoom(self):
         return self.zoomlevels[len(self.zoomlevels)/2]
@@ -193,16 +202,20 @@ class MBTiles(object):
             "maxzoom": self.maxzoom,
         })
         # Additionnal info
+        kwargs = dict(name=self.id,
+                      x='{x}',y='{y}',z='{z}')
+        tileformat = self.metadata.get('format', 'png')
+        if self.catalog:
+            kwargs['catalog'] = self.catalog
         try:
-            kwargs = dict(name=self.id, x='{x}',y='{y}',z='{z}')
-            if self.catalog:
-                kwargs['catalog'] = self.catalog
-            tilepattern = reverse("mbtilesmap:tile", kwargs=kwargs)
+            tilepattern = reverse("mbtilesmap:tile", kwargs=dict(kwargs.items() +
+                                                                 [('format', tileformat)]))
             gridpattern = reverse("mbtilesmap:grid", kwargs=kwargs)
         except NoReverseMatch:
             # In case django-mbtiles was not registered in namespace mbtilesmap
-            tilepattern = reverse("tile", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
-            gridpattern = reverse("grid", kwargs=dict(name=self.id, x='{x}',y='{y}',z='{z}'))
+            tilepattern = reverse("tile", kwargs=dict(kwargs.items() +
+                                                      [('format', tileformat)]))
+            gridpattern = reverse("grid", kwargs=kwargs)
         tilepattern = request.build_absolute_uri(tilepattern)
         gridpattern = request.build_absolute_uri(gridpattern)
         tilepattern = tilepattern.replace('%7B', '{').replace('%7D', '}')
